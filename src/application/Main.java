@@ -26,6 +26,8 @@ public class Main extends Application {
             primaryStage.setTitle("Grade Calculator - Login");
             primaryStage.setScene(new javafx.scene.Scene(loginView.getView(), 600, 400));
             primaryStage.show();
+            primaryStage.setMaximized(true);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }

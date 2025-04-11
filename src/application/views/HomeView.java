@@ -2,6 +2,7 @@ package application.views;
 
 import java.util.List;
 
+import javafx.animation.FadeTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
@@ -9,15 +10,27 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Glow;
+import javafx.scene.effect.InnerShadow;
+import javafx.scene.effect.Reflection;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.ButtonBar;
@@ -28,9 +41,10 @@ import application.models.Semester;
 import application.models.Subject;
 import application.models.User;
 import application.services.UserService;
+import javafx.util.Duration;
 
 /**
- * View class for the home screen
+ * Enhanced view class for the home screen with modern styling
  */
 public class HomeView {
     private BorderPane mainLayout;
@@ -40,6 +54,14 @@ public class HomeView {
     private Label overallGpaLabel;
     private TextField goalGpaField;
     private Label requiredGpaLabel;
+    
+    // Define color constants for consistent styling
+    private static final Color PRIMARY_COLOR = Color.rgb(0, 59, 111); // Northeastern Blue
+    private static final Color SECONDARY_COLOR = Color.rgb(200, 16, 46); // Northeastern Red
+    private static final Color ACCENT_COLOR = Color.rgb(0, 173, 86); // Green for grades
+    private static final Color LIGHT_GRAY = Color.rgb(240, 240, 240);
+    private static final Color BACKGROUND_COLOR = Color.rgb(245, 245, 255);
+    private static final Color CARD_COLOR = Color.rgb(252, 252, 255);
     
     /**
      * Constructor with forced UI update
@@ -60,230 +82,38 @@ public class HomeView {
                 System.err.println("Interrupted while waiting to update UI: " + e.getMessage());
             }
         });
+        
     }
 
     /**
-     * Initialize the view
+     * Initialize the view with enhanced styling
      */
-//    private void initialize() {
-//        try {
-//            System.out.println("Initializing HomeView");
-//            mainLayout = new BorderPane();
-//            mainLayout.setPadding(new Insets(20));
-//            
-//            // Create header
-//            Label headerLabel = new Label("Northeastern University - Grade Calculator");
-//            headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-//            
-//            Label welcomeLabel = new Label("Welcome, " + currentUser.getFullName());
-//            welcomeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-//            
-//            VBox headerBox = new VBox(10);
-//            headerBox.setAlignment(Pos.CENTER_LEFT);
-//            headerBox.getChildren().addAll(headerLabel, welcomeLabel);
-//            
-//            Region spacer = new Region();
-//            HBox.setHgrow(spacer, Priority.ALWAYS);
-//            
-//            Button logoutButton = new Button("Logout");
-//            logoutButton.setOnAction(e -> controller.logout());
-//            
-//            HBox topBox = new HBox();
-//            topBox.setAlignment(Pos.CENTER);
-//            topBox.setPadding(new Insets(10));
-//            topBox.setSpacing(10);
-//            
-//            topBox.getChildren().addAll(headerBox, spacer, logoutButton);
-//            
-//            mainLayout.setTop(topBox);
-//            
-//            // Create content
-//            VBox contentBox = new VBox(20);
-//            contentBox.setAlignment(Pos.CENTER);
-//            contentBox.setPadding(new Insets(20));
-//            
-//            // GPA Summary section
-//            HBox gpaSummaryBox = new HBox(20);
-//            gpaSummaryBox.setAlignment(Pos.CENTER_LEFT);
-//            gpaSummaryBox.setPadding(new Insets(10, 10, 20, 10));
-//            
-//            VBox currentGpaBox = new VBox(5);
-//            Label currentGpaHeaderLabel = new Label("Current Overall GPA");
-//            currentGpaHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-//            overallGpaLabel = new Label("0.00");
-//            overallGpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-//            currentGpaBox.getChildren().addAll(currentGpaHeaderLabel, overallGpaLabel);
-//            
-//            VBox goalGpaBox = new VBox(5);
-//            Label goalGpaHeaderLabel = new Label("GPA Goal");
-//            goalGpaHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-//            goalGpaField = new TextField("4.0");
-//            goalGpaField.setPrefWidth(80);
-//            goalGpaBox.getChildren().addAll(goalGpaHeaderLabel, goalGpaField);
-//            
-//            VBox requiredGpaBox = new VBox(5);
-//            Label requiredGpaHeaderLabel = new Label("Required GPA for Future Semesters");
-//            requiredGpaHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-//            requiredGpaLabel = new Label("0.00");
-//            requiredGpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-//            requiredGpaBox.getChildren().addAll(requiredGpaHeaderLabel, requiredGpaLabel);
-//            
-//            Button calculateButton = new Button("Calculate");
-//            calculateButton.setStyle("-fx-font-size: 14px;");
-//            VBox calculateBox = new VBox();
-//            calculateBox.setAlignment(Pos.CENTER);
-//            calculateBox.getChildren().add(calculateButton);
-//            
-//            gpaSummaryBox.getChildren().addAll(currentGpaBox, goalGpaBox, calculateBox, requiredGpaBox);
-//            
-//            // Semesters section
-//            Label semestersLabel = new Label("Your Semesters");
-//            semestersLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-//            
-//            // Create a FlowPane for semester cards
-//            semestersPane = new FlowPane();
-//            semestersPane.setHgap(20);
-//            semestersPane.setVgap(20);
-//            semestersPane.setAlignment(Pos.CENTER);
-//            semestersPane.setPrefWidth(800);
-//            
-//            // Add button
-//            Button addSemesterButton = new Button("Add Semester");
-//            addSemesterButton.setStyle("-fx-font-size: 14px;");
-//            addSemesterButton.setPrefWidth(150);
-//            HBox addButtonBox = new HBox();
-//            addButtonBox.setAlignment(Pos.CENTER);
-//            addButtonBox.setPadding(new Insets(20, 0, 0, 0));
-//            addButtonBox.getChildren().add(addSemesterButton);
-//            
-//            contentBox.getChildren().addAll(gpaSummaryBox, semestersLabel, semestersPane, addButtonBox);
-//            
-//            mainLayout.setCenter(contentBox);
-//            
-//            // Set up event handlers
-//            addSemesterButton.setOnAction(e -> showAddSemesterDialog());
-//            calculateButton.setOnAction(e -> calculateRequiredGPA());
-//            
-//            // Load semesters with fresh data from the database
-//            loadSemesters();
-//            
-//            // Register for data change events to refresh when needed
-////            application.utils.EventBus.getInstance().register(
-////                application.utils.DataChangedEvent.class,
-////                event -> javafx.application.Platform.runLater(this::loadSemesters)
-////            );
-//             application.utils.EventBus.getInstance().register(
-//            	    application.utils.DataChangedEvent.class,
-//            	    event -> {
-//            	        System.out.println("DataChangedEvent received in HomeView - refreshing UI");
-//            	        Platform.runLater(this::forceUpdateUI);
-//            	    }
-//            	);
-//            
-//            System.out.println("HomeView initialization complete");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            System.err.println("Error initializing HomeView: " + e.getMessage());
-//        }
-//    }
     private void initialize() {
         try {
             System.out.println("Initializing HomeView");
             mainLayout = new BorderPane();
+            
+            // Set up gradient background
+            LinearGradient gradient = new LinearGradient(
+                0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+                new Stop(0, BACKGROUND_COLOR),
+                new Stop(1, Color.rgb(235, 240, 250))
+            );
+            
+            mainLayout.setStyle("-fx-background-color: #f5f5ff;");
             mainLayout.setPadding(new Insets(20));
             
-            // Create header
-            Label headerLabel = new Label("Northeastern University - Grade Calculator");
-            headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+            // Create background decorative elements
+            createBackgroundElements();
             
-            Label welcomeLabel = new Label("Welcome, " + currentUser.getFullName());
-            welcomeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            // Create enhanced header
+            createEnhancedHeader();
             
-            VBox headerBox = new VBox(10);
-            headerBox.setAlignment(Pos.CENTER_LEFT);
-            headerBox.getChildren().addAll(headerLabel, welcomeLabel);
+            // Create styled content area
+            createStyledContent();
             
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-            
-            Button logoutButton = new Button("Logout");
-            logoutButton.setOnAction(e -> controller.logout());
-            
-            HBox topBox = new HBox();
-            topBox.setAlignment(Pos.CENTER);
-            topBox.setPadding(new Insets(10));
-            topBox.setSpacing(10);
-            
-            topBox.getChildren().addAll(headerBox, spacer, logoutButton);
-            
-            mainLayout.setTop(topBox);
-            
-            // Create content
-            VBox contentBox = new VBox(20);
-            contentBox.setAlignment(Pos.CENTER);
-            contentBox.setPadding(new Insets(20));
-            
-            // GPA Summary section
-            HBox gpaSummaryBox = new HBox(20);
-            gpaSummaryBox.setAlignment(Pos.CENTER_LEFT);
-            gpaSummaryBox.setPadding(new Insets(10, 10, 20, 10));
-            
-            VBox currentGpaBox = new VBox(5);
-            Label currentGpaHeaderLabel = new Label("Current Overall GPA");
-            currentGpaHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            overallGpaLabel = new Label("0.00");
-            overallGpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-            currentGpaBox.getChildren().addAll(currentGpaHeaderLabel, overallGpaLabel);
-            
-            VBox goalGpaBox = new VBox(5);
-            Label goalGpaHeaderLabel = new Label("GPA Goal");
-            goalGpaHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            goalGpaField = new TextField("4.0");
-            goalGpaField.setPrefWidth(80);
-            goalGpaBox.getChildren().addAll(goalGpaHeaderLabel, goalGpaField);
-            
-            VBox requiredGpaBox = new VBox(5);
-            Label requiredGpaHeaderLabel = new Label("Required GPA for Future Semesters");
-            requiredGpaHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            requiredGpaLabel = new Label("0.00");
-            requiredGpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-            requiredGpaBox.getChildren().addAll(requiredGpaHeaderLabel, requiredGpaLabel);
-            
-            Button calculateButton = new Button("Calculate");
-            calculateButton.setStyle("-fx-font-size: 14px;");
-            VBox calculateBox = new VBox();
-            calculateBox.setAlignment(Pos.CENTER);
-            calculateBox.getChildren().add(calculateButton);
-            
-            gpaSummaryBox.getChildren().addAll(currentGpaBox, goalGpaBox, calculateBox, requiredGpaBox);
-            
-            // Semesters section
-            Label semestersLabel = new Label("Your Semesters");
-            semestersLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-            
-            // Create a FlowPane for semester cards
-            semestersPane = new FlowPane();
-            semestersPane.setHgap(20);
-            semestersPane.setVgap(20);
-            semestersPane.setAlignment(Pos.CENTER);
-            semestersPane.setPrefWidth(800);
-            
-            // Add button
-            Button addSemesterButton = new Button("Add Semester");
-            addSemesterButton.setStyle("-fx-font-size: 14px;");
-            addSemesterButton.setPrefWidth(150);
-            HBox addButtonBox = new HBox();
-            addButtonBox.setAlignment(Pos.CENTER);
-            addButtonBox.setPadding(new Insets(20, 0, 0, 0));
-            addButtonBox.getChildren().add(addSemesterButton);
-            
-            contentBox.getChildren().addAll(gpaSummaryBox, semestersLabel, semestersPane, addButtonBox);
-            
-            mainLayout.setCenter(contentBox);
-            
-            // Set up event handlers
-            addSemesterButton.setOnAction(e -> showAddSemesterDialog());
-            calculateButton.setOnAction(e -> calculateRequiredGPA());
+            // Create footer
+            createFooter();
             
             // Force an aggressive GPA update immediately
             forceDisplayGPAs();
@@ -305,41 +135,497 @@ public class HomeView {
     }
     
     /**
+     * Creates decorative background elements
+     */
+    private void createBackgroundElements() {
+        // Create decorative circles in background
+        StackPane backgroundElements = new StackPane();
+        backgroundElements.setMouseTransparent(true); // Allow clicks to pass through
+        
+        // Top left decorative circle
+        Circle circle1 = new Circle(180);
+        circle1.setFill(Color.rgb(0, 59, 111, 0.04));
+        circle1.setTranslateX(-400);
+        circle1.setTranslateY(-200);
+        
+        // Bottom right decorative circle
+        Circle circle2 = new Circle(200);
+        circle2.setFill(Color.rgb(200, 16, 46, 0.04));
+        circle2.setTranslateX(400);
+        circle2.setTranslateY(300);
+        
+        // Middle accent circle
+        Circle circle3 = new Circle(120);
+        circle3.setFill(Color.rgb(0, 173, 86, 0.05));
+        circle3.setTranslateX(200);
+        circle3.setTranslateY(-150);
+        
+        backgroundElements.getChildren().addAll(circle1, circle2, circle3);
+        mainLayout.getChildren().add(backgroundElements);
+    }
+    
+    /**
+     * Creates an enhanced header with logo and styling
+     */
+    private void createEnhancedHeader() {
+        HBox topBox = new HBox();
+        topBox.setAlignment(Pos.CENTER);
+        topBox.setPadding(new Insets(10, 20, 25, 20));
+        topBox.setSpacing(20);
+        
+        // Left side - Logo and title
+        HBox headerBox = new HBox(20);
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+        
+        // Create logo circle
+        StackPane logoContainer = new StackPane();
+        
+        Circle logoCircle = new Circle(30);
+        logoCircle.setFill(new LinearGradient(
+            0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+            new Stop(0, PRIMARY_COLOR),
+            new Stop(1, PRIMARY_COLOR.darker())
+        ));
+        
+        // Add drop shadow to logo
+        DropShadow dropShadow = new DropShadow();
+        dropShadow.setRadius(10);
+        dropShadow.setOffsetY(3);
+        dropShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+        logoCircle.setEffect(dropShadow);
+        
+        // "A+" text for logo
+        Text gradeText = new Text("A+");
+        gradeText.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        gradeText.setFill(Color.WHITE);
+        
+        logoContainer.getChildren().addAll(logoCircle, gradeText);
+        
+        // Create title text
+        VBox titleBox = new VBox(5);
+        
+        Text universityText = new Text("Northeastern University");
+        universityText.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        universityText.setFill(PRIMARY_COLOR);
+        
+        Text calculatorText = new Text("Grade Calculator");
+        calculatorText.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+        calculatorText.setFill(SECONDARY_COLOR);
+        
+        titleBox.getChildren().addAll(universityText, calculatorText);
+        
+        headerBox.getChildren().addAll(logoContainer, titleBox);
+        
+        // Right side - Welcome message and logout button
+        HBox userBox = new HBox(15);
+        userBox.setAlignment(Pos.CENTER_RIGHT);
+        
+        // Welcome message
+        VBox welcomeBox = new VBox(5);
+        welcomeBox.setAlignment(Pos.CENTER_RIGHT);
+        
+        Label welcomeLabel = new Label("Welcome,");
+        welcomeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        welcomeLabel.setTextFill(Color.rgb(100, 100, 100));
+        
+        Label nameLabel = new Label(currentUser.getFullName());
+        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        nameLabel.setTextFill(PRIMARY_COLOR);
+        
+        welcomeBox.getChildren().addAll(welcomeLabel, nameLabel);
+        
+        // Create logout button
+        Button logoutButton = createStyledButton("Logout", LIGHT_GRAY);
+        logoutButton.setTextFill(SECONDARY_COLOR);
+        logoutButton.setPrefWidth(100);
+        logoutButton.setStyle("-fx-background-color: white; -fx-border-color: " + toRgbString(SECONDARY_COLOR) + "; -fx-border-radius: 5; -fx-background-radius: 5;");
+        logoutButton.setOnAction(e -> controller.logout());
+        
+        userBox.getChildren().addAll(welcomeBox, logoutButton);
+        
+        // Create spacer to push welcome and logout to the right
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        // Add all elements to top box
+        topBox.getChildren().addAll(headerBox, spacer, userBox);
+        
+        // Add colorful divider line
+        Rectangle colorBar = new Rectangle(1200, 4);
+        colorBar.setArcWidth(4);
+        colorBar.setArcHeight(4);
+        
+        // Gradient for color bar
+        LinearGradient barGradient = new LinearGradient(
+            0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
+            new Stop(0, PRIMARY_COLOR),
+            new Stop(0.5, SECONDARY_COLOR),
+            new Stop(1, ACCENT_COLOR)
+        );
+        colorBar.setFill(barGradient);
+        
+        // Create glow effect
+        Glow glow = new Glow();
+        glow.setLevel(0.3);
+        colorBar.setEffect(glow);
+        
+        // Container for top elements
+        VBox headerContainer = new VBox(15);
+        headerContainer.getChildren().addAll(topBox, colorBar);
+        
+        // Animate the header with fade in
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(800), headerContainer);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+        
+        mainLayout.setTop(headerContainer);
+    }
+    
+    /**
+     * Creates the content area with GPA summary and semester cards
+     */
+    private void createStyledContent() {
+        VBox contentBox = new VBox(30);
+        contentBox.setAlignment(Pos.CENTER);
+        contentBox.setPadding(new Insets(30, 20, 20, 20));
+        
+        // Create GPA Summary Panel
+        StackPane summaryPanel = createGpaSummaryPanel();
+        
+        // Create Semesters Panel
+        VBox semestersSection = createSemestersSection();
+        
+        // Add all to content
+        contentBox.getChildren().addAll(summaryPanel, semestersSection);
+        
+        // Animate content with fade in
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(1000), contentBox);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.setDelay(Duration.millis(300));
+        fadeIn.play();
+        
+        mainLayout.setCenter(contentBox);
+    }
+    
+    /**
+     * Creates the GPA summary panel with current, goal, and required GPA
+     */
+    private StackPane createGpaSummaryPanel() {
+        StackPane summaryPanel = new StackPane();
+        
+        // Create background panel
+        Rectangle panelBg = new Rectangle();
+        panelBg.setWidth(900);
+        panelBg.setHeight(180);
+        panelBg.setArcWidth(20);
+        panelBg.setArcHeight(20);
+        
+        // Create panel gradient
+        LinearGradient panelGradient = new LinearGradient(
+            0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+            new Stop(0, Color.WHITE),
+            new Stop(1, Color.rgb(250, 250, 255))
+        );
+        panelBg.setFill(panelGradient);
+        
+        // Add shadow to panel
+        DropShadow panelShadow = new DropShadow();
+        panelShadow.setRadius(15);
+        panelShadow.setColor(Color.rgb(0, 0, 0, 0.15));
+        panelShadow.setOffsetY(5);
+        panelBg.setEffect(panelShadow);
+        
+        // Create GPA Summary content
+        HBox summaryContent = new HBox(40);
+        summaryContent.setAlignment(Pos.CENTER);
+        summaryContent.setPadding(new Insets(25, 30, 25, 30));
+        
+        // Current GPA Box
+        VBox currentGpaBox = createGpaDisplayBox(
+            "Current Overall GPA", 
+            overallGpaLabel = createGpaValueLabel("0.00"), 
+            PRIMARY_COLOR
+        );
+        styleGpaBox(currentGpaBox);
+        
+        // Goal GPA Box
+        VBox goalGpaBox = new VBox(8);
+        goalGpaBox.setAlignment(Pos.CENTER);
+        goalGpaBox.setPadding(new Insets(15, 25, 15, 25));
+        goalGpaBox.setMinWidth(180);
+        
+        Label goalHeaderLabel = new Label("GPA Goal");
+        goalHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        goalHeaderLabel.setTextFill(Color.rgb(80, 80, 80));
+        
+        goalGpaField = new TextField("4.0");
+        goalGpaField.setPrefWidth(100);
+        goalGpaField.setMaxWidth(100);
+        goalGpaField.setAlignment(Pos.CENTER);
+        goalGpaField.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        styleTextField(goalGpaField);
+        
+        goalGpaBox.getChildren().addAll(goalHeaderLabel, goalGpaField);
+        styleGpaBox(goalGpaBox);
+        
+        // Calculate Button
+        Button calculateButton = createStyledButton("Calculate", ACCENT_COLOR);
+        calculateButton.setTextFill(Color.WHITE);
+        calculateButton.setPrefWidth(120);
+        calculateButton.setPrefHeight(40);
+        calculateButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        calculateButton.setOnAction(e -> calculateRequiredGPA());
+        
+        VBox calculateBox = new VBox();
+        calculateBox.setAlignment(Pos.CENTER);
+        calculateBox.getChildren().add(calculateButton);
+        
+        // Required GPA Box
+        VBox requiredGpaBox = createGpaDisplayBox(
+            "Required GPA for Future Semesters", 
+            requiredGpaLabel = createGpaValueLabel("0.00"), 
+            SECONDARY_COLOR
+        );
+        styleGpaBox(requiredGpaBox);
+        
+        // Add all to summary content
+        summaryContent.getChildren().addAll(currentGpaBox, goalGpaBox, calculateBox, requiredGpaBox);
+        
+        summaryPanel.getChildren().addAll(panelBg, summaryContent);
+        
+        return summaryPanel;
+    }
+    
+    /**
+     * Creates the semesters section with title and flowpane for semester cards
+     */
+    private VBox createSemestersSection() {
+        VBox semestersSection = new VBox(20);
+        semestersSection.setAlignment(Pos.CENTER);
+        
+        // Create section title
+        HBox titleBox = new HBox();
+        titleBox.setAlignment(Pos.CENTER_LEFT);
+        titleBox.setPadding(new Insets(10, 0, 5, 10));
+        
+        Text semestersTitle = new Text("Your Semesters");
+        semestersTitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        semestersTitle.setFill(PRIMARY_COLOR);
+        
+        titleBox.getChildren().add(semestersTitle);
+        
+        // Create FlowPane for semester cards
+        semestersPane = new FlowPane();
+        semestersPane.setHgap(30);
+        semestersPane.setVgap(30);
+        semestersPane.setAlignment(Pos.CENTER);
+        semestersPane.setPrefWidth(900);
+        semestersPane.setPadding(new Insets(20, 0, 20, 0));
+        
+        // Create 'Add Semester' button
+        Button addSemesterButton = createStyledButton("Add Semester", PRIMARY_COLOR);
+        addSemesterButton.setTextFill(Color.WHITE);
+        addSemesterButton.setPrefWidth(180);
+        addSemesterButton.setPrefHeight(45);
+        addSemesterButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        
+        // Add vertical glow effect to button
+        DropShadow buttonShadow = new DropShadow();
+        buttonShadow.setRadius(10);
+        buttonShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+        buttonShadow.setOffsetY(3);
+        addSemesterButton.setEffect(buttonShadow);
+        
+        addSemesterButton.setOnAction(e -> showAddSemesterDialog());
+        
+        HBox buttonBox = new HBox();
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.setPadding(new Insets(15, 0, 15, 0));
+        buttonBox.getChildren().add(addSemesterButton);
+        
+        // Add all to section
+        semestersSection.getChildren().addAll(titleBox, semestersPane, buttonBox);
+        
+        return semestersSection;
+    }
+    
+    /**
+     * Creates a footer with version information
+     */
+    private void createFooter() {
+        HBox footerBox = new HBox();
+        footerBox.setAlignment(Pos.CENTER_RIGHT);
+        footerBox.setPadding(new Insets(15, 30, 15, 30));
+        
+        Label versionLabel = new Label("Northeastern Grade Calculator v1.0");
+        versionLabel.setFont(Font.font("Arial", 12));
+        versionLabel.setTextFill(Color.rgb(150, 150, 150));
+        
+        footerBox.getChildren().add(versionLabel);
+        mainLayout.setBottom(footerBox);
+    }
+    
+    /**
+     * Creates a display box for GPAs with header and value
+     */
+    private VBox createGpaDisplayBox(String header, Label valueLabel, Color accentColor) {
+        VBox box = new VBox(8);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(15, 25, 15, 25));
+        box.setMinWidth(220);
+        
+        Label headerLabel = new Label(header);
+        headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        headerLabel.setTextFill(Color.rgb(80, 80, 80));
+        
+        valueLabel.setTextFill(accentColor);
+        
+        box.getChildren().addAll(headerLabel, valueLabel);
+        
+        return box;
+    }
+    
+    /**
+     * Creates a styled GPA value label
+     */
+    private Label createGpaValueLabel(String initialValue) {
+        Label label = new Label(initialValue);
+        label.setFont(Font.font("Arial", FontWeight.BOLD, 34));
+        
+        // Add reflection effect
+        Reflection reflection = new Reflection();
+        reflection.setFraction(0.2);
+        reflection.setTopOpacity(0.5);
+        label.setEffect(reflection);
+        
+        return label;
+    }
+    
+    /**
+     * Applies styling to a GPA display box
+     */
+    private void styleGpaBox(VBox box) {
+        box.setStyle(
+            "-fx-background-color: rgba(255, 255, 255, 0.6); " +
+            "-fx-background-radius: 10; " +
+            "-fx-border-color: rgba(200, 200, 220, 0.5); " +
+            "-fx-border-radius: 10; " +
+            "-fx-border-width: 1px;"
+        );
+        
+        // Add subtle shadow
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(8);
+        shadow.setOffsetY(2);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.1));
+        box.setEffect(shadow);
+    }
+    
+    /**
+     * Styles a text field with modern appearance
+     */
+    private void styleTextField(TextField textField) {
+        textField.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 5; " +
+            "-fx-border-color: #cccccc; " +
+            "-fx-border-radius: 5; " +
+            "-fx-border-width: 1px; " +
+            "-fx-padding: 8px 12px; " +
+            "-fx-font-size: 16px;"
+        );
+        
+        // Add subtle inner shadow for depth
+        InnerShadow innerShadow = new InnerShadow();
+        innerShadow.setRadius(2);
+        innerShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+        innerShadow.setOffsetX(1);
+        innerShadow.setOffsetY(1);
+        textField.setEffect(innerShadow);
+        
+        // Change style on focus
+        textField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            if (isFocused) {
+                textField.setStyle(
+                    "-fx-background-color: white; " +
+                    "-fx-background-radius: 5; " +
+                    "-fx-border-color: " + toRgbString(ACCENT_COLOR) + "; " +
+                    "-fx-border-radius: 5; " +
+                    "-fx-border-width: 2px; " +
+                    "-fx-padding: 7px 11px; " + 
+                    "-fx-font-size: 16px;"
+                );
+            } else {
+                textField.setStyle(
+                    "-fx-background-color: white; " +
+                    "-fx-background-radius: 5; " +
+                    "-fx-border-color: #cccccc; " +
+                    "-fx-border-radius: 5; " +
+                    "-fx-border-width: 1px; " +
+                    "-fx-padding: 8px 12px; " +
+                    "-fx-font-size: 16px;"
+                );
+            }
+        });
+    }
+    
+    /**
+     * Creates a styled button with the specified text and background color
+     */
+    private Button createStyledButton(String text, Color bgColor) {
+        Button button = new Button(text);
+        button.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        
+        // Convert color to CSS format
+        String colorString = toRgbString(bgColor);
+        
+        // Style the button
+        button.setStyle(
+            "-fx-background-color: " + colorString + "; " +
+            "-fx-background-radius: 5; " +
+            "-fx-cursor: hand;"
+        );
+        
+        // Add hover effect
+        Color hoverColor = bgColor.darker();
+        String hoverColorString = toRgbString(hoverColor);
+        
+        button.setOnMouseEntered(e -> 
+            button.setStyle(
+                "-fx-background-color: " + hoverColorString + "; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;"
+            )
+        );
+        
+        button.setOnMouseExited(e -> 
+            button.setStyle(
+                "-fx-background-color: " + colorString + "; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;"
+            )
+        );
+        
+        return button;
+    }
+    
+    /**
+     * Converts a JavaFX Color to an RGB string for CSS
+     */
+    private String toRgbString(Color color) {
+        return String.format(
+            "rgb(%d, %d, %d)",
+            (int) (color.getRed() * 255),
+            (int) (color.getGreen() * 255),
+            (int) (color.getBlue() * 255)
+        );
+    }
+    
+    /**
      * Load and display all semesters for the current user with fresh data from the database
      */
-//    private void loadSemesters() {
-//        try {
-//            System.out.println("\n===== LOADING SEMESTERS WITH FRESH DATA =====");
-//            
-//            // Get fresh data from the database
-//            List<Semester> semesters = controller.getAllSemesters();
-//            semestersPane.getChildren().clear();
-//            
-//            System.out.println("Found " + semesters.size() + " semesters");
-//            
-//            if (semesters.isEmpty()) {
-//                Label noSemestersLabel = new Label("You don't have any semesters yet");
-//                noSemestersLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-//                semestersPane.getChildren().add(noSemestersLabel);
-//            } else {
-//                // Add each semester card to the UI
-//                for (Semester semester : semesters) {
-//                    semestersPane.getChildren().add(createSemesterCard(semester));
-//                }
-//            }
-//            
-//            // Calculate and update the overall GPA separately
-//            updateOverallGPA();
-//            
-//            System.out.println("===== SEMESTERS LOADED SUCCESSFULLY =====\n");
-//        } catch (Exception e) {
-//            System.err.println("Error loading semesters: " + e.getMessage());
-//            e.printStackTrace();
-//            showErrorAlert("Error", "Failed to load semesters: " + e.getMessage());
-//        }
-//    }
-    
- // Replace the existing loadSemesters() method with this version
     private void loadSemesters() {
         try {
             System.out.println("\n===== LOADING SEMESTERS WITH FRESH DATA =====");
@@ -351,9 +637,26 @@ public class HomeView {
             System.out.println("Found " + semesters.size() + " semesters");
             
             if (semesters.isEmpty()) {
-                Label noSemestersLabel = new Label("You don't have any semesters yet");
-                noSemestersLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-                semestersPane.getChildren().add(noSemestersLabel);
+                // Create a styled "no semesters" message
+                StackPane emptyPane = new StackPane();
+                emptyPane.setPrefWidth(800);
+                emptyPane.setPrefHeight(200);
+                
+                VBox emptyBox = new VBox(15);
+                emptyBox.setAlignment(Pos.CENTER);
+                
+                Text emptyText = new Text("You don't have any semesters yet");
+                emptyText.setFont(Font.font("Arial", FontWeight.NORMAL, 18));
+                emptyText.setFill(Color.rgb(120, 120, 140));
+                
+                Text addText = new Text("Click 'Add Semester' to get started");
+                addText.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+                addText.setFill(Color.rgb(150, 150, 170));
+                
+                emptyBox.getChildren().addAll(emptyText, addText);
+                emptyPane.getChildren().add(emptyBox);
+                
+                semestersPane.getChildren().add(emptyPane);
             } else {
                 // Calculate overall GPA here
                 double totalGPA = 0.0;
@@ -370,7 +673,7 @@ public class HomeView {
                     }
                     
                     // Create card with calculated GPA
-                    VBox semesterCard = createSemesterCardWithForcedGPA(semester, semesterGPA);
+                    StackPane semesterCard = createEnhancedSemesterCard(semester, semesterGPA);
                     semestersPane.getChildren().add(semesterCard);
                 }
                 
@@ -387,122 +690,182 @@ public class HomeView {
             showErrorAlert("Error", "Failed to load semesters: " + e.getMessage());
         }
     }
-//    
-//    /**
-//     * Create a visual card for a semester with correct GPA
-//     * 
-//     * @param semester The semester
-//     * @return The VBox representing the semester card
-//     */
-//    private VBox createSemesterCard(Semester semester) {
-//        // Force recalculation of semester GPA
-//        double gpa = semester.calculateGPA();
-//        
-//        System.out.println("Creating card for semester: " + semester.getName() + 
-//                          ", ID: " + semester.getId() + 
-//                          ", GPA: " + gpa);
-//        
-//        VBox card = new VBox(10);
-//        card.setPadding(new Insets(15));
-//        card.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-radius: 5; -fx-background-radius: 5;");
-//        card.setPrefWidth(250);
-//        card.setPrefHeight(150);
-//        
-//        // Header with semester name and delete button
-//        HBox headerBox = new HBox(10);
-//        headerBox.setAlignment(Pos.CENTER_LEFT);
-//        
-//        Label nameLabel = new Label(semester.getName());
-//        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-//        
-//        Region spacer = new Region();
-//        HBox.setHgrow(spacer, Priority.ALWAYS);
-//        
-//        Button deleteButton = new Button("X");
-//        deleteButton.setStyle("-fx-background-color: #ff4d4d; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 25px; -fx-min-height: 25px; -fx-max-width: 25px; -fx-max-height: 25px; -fx-padding: 0;");
-//        
-//        headerBox.getChildren().addAll(nameLabel, spacer, deleteButton);
-//        
-//        // Display GPA with the recalculated value
-//        Label gpaLabel = new Label(String.format("GPA: %.2f", gpa));
-//        gpaLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-//        
-//        // Subject count
-//        Label subjectsLabel = new Label(String.format("Subjects: %d", semester.getSubjects().size()));
-//        
-//        // Button to view details
-//        Button viewButton = new Button("View Details");
-//        viewButton.setStyle("-fx-font-size: 12px;");
-//        viewButton.setOnAction(e -> controller.navigateToSemesterDetails(semester));
-//        
-//        // Spacer to push the button to the bottom
-//        Region verticalSpacer = new Region();
-//        VBox.setVgrow(verticalSpacer, Priority.ALWAYS);
-//        
-//        card.getChildren().addAll(headerBox, gpaLabel, subjectsLabel, verticalSpacer, viewButton);
-//        
-//        // Set up delete button event handler
-//        deleteButton.setOnAction(e -> showDeleteSemesterConfirmation(semester));
-//        
-//        return card;
-//    }
     
     /**
-     * Create a semester card with a directly provided GPA value
-     * This bypasses any calculation issues
-     * 
-     * @param semester The semester
-     * @param forcedGPA The pre-calculated GPA to display
-     * @return The semester card VBox
+     * Creates an enhanced semester card with visual styling
      */
-    private VBox createSemesterCardWithForcedGPA(Semester semester, double forcedGPA) {
-        System.out.println("Creating semester card with forced GPA: " + forcedGPA);
+    private StackPane createEnhancedSemesterCard(Semester semester, double forcedGPA) {
+        System.out.println("Creating enhanced semester card with GPA: " + forcedGPA);
         
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(15));
-        card.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-radius: 5; -fx-background-radius: 5;");
-        card.setPrefWidth(250);
-        card.setPrefHeight(150);
+        StackPane cardContainer = new StackPane();
+        
+        // Create card background with rounded corners
+        Rectangle cardBg = new Rectangle(280, 180);
+        cardBg.setArcWidth(15);
+        cardBg.setArcHeight(15);
+        
+        // Create card gradient
+        LinearGradient cardGradient = new LinearGradient(
+            0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+            new Stop(0, CARD_COLOR),
+            new Stop(1, Color.rgb(245, 245, 250))
+        );
+        cardBg.setFill(cardGradient);
+        
+        // Add card shadow
+        DropShadow cardShadow = new DropShadow();
+        cardShadow.setRadius(10);
+        cardShadow.setColor(Color.rgb(0, 0, 0, 0.2));
+        cardShadow.setOffsetY(5);
+        cardBg.setEffect(cardShadow);
+        
+        // Create card content
+        VBox cardContent = new VBox(12);
+        cardContent.setPadding(new Insets(20, 20, 20, 20));
+        cardContent.setPrefWidth(280);
+        cardContent.setPrefHeight(180);
         
         // Header with semester name and delete button
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
         
-        Label nameLabel = new Label(semester.getName());
-        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        Text nameText = new Text(semester.getName());
+        nameText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        nameText.setFill(PRIMARY_COLOR);
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        Button deleteButton = new Button("X");
-        deleteButton.setStyle("-fx-background-color: #ff4d4d; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 25px; -fx-min-height: 25px; -fx-max-width: 25px; -fx-max-height: 25px; -fx-padding: 0;");
+        Button deleteButton = new Button("×");
+        deleteButton.setStyle(
+            "-fx-background-color: " + toRgbString(SECONDARY_COLOR) + "; " +
+            "-fx-text-fill: white; " +
+            "-fx-font-weight: bold; " +
+            "-fx-font-size: 14px; " +
+            "-fx-min-width: 24px; " +
+            "-fx-min-height: 24px; " +
+            "-fx-max-width: 24px; " +
+            "-fx-max-height: 24px; " +
+            "-fx-padding: 0; " +
+            "-fx-background-radius: 12;"
+        );
         
-        headerBox.getChildren().addAll(nameLabel, spacer, deleteButton);
+        // Add hover effect to delete button
+        deleteButton.setOnMouseEntered(e -> 
+            deleteButton.setStyle(
+                "-fx-background-color: " + toRgbString(SECONDARY_COLOR.darker()) + "; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-weight: bold; " +
+                "-fx-font-size: 14px; " +
+                "-fx-min-width: 24px; " +
+                "-fx-min-height: 24px; " +
+                "-fx-max-width: 24px; " +
+                "-fx-max-height: 24px; " +
+                "-fx-padding: 0; " +
+                "-fx-background-radius: 12;"
+            )
+        );
         
-        // Use the forced GPA value directly
-        Label gpaLabel = new Label(String.format("GPA: %.2f", forcedGPA));
-        gpaLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        deleteButton.setOnMouseExited(e -> 
+            deleteButton.setStyle(
+                "-fx-background-color: " + toRgbString(SECONDARY_COLOR) + "; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-weight: bold; " +
+                "-fx-font-size: 14px; " +
+                "-fx-min-width: 24px; " +
+                "-fx-min-height: 24px; " +
+                "-fx-max-width: 24px; " +
+                "-fx-max-height: 24px; " +
+                "-fx-padding: 0; " +
+                "-fx-background-radius: 12;"
+            )
+        );
+        
+        headerBox.getChildren().addAll(nameText, spacer, deleteButton);
+        
+        // GPA display with circle indicator
+        HBox gpaBox = new HBox(15);
+        gpaBox.setAlignment(Pos.CENTER_LEFT);
+        gpaBox.setPadding(new Insets(10, 0, 10, 0));
+        
+        // Create GPA circle
+        StackPane gpaCircle = new StackPane();
+        
+        Circle circle = new Circle(28);
+        
+        // Color the circle based on GPA value
+        Color circleColor;
+        if (forcedGPA >= 3.7) {
+            circleColor = ACCENT_COLOR; // Green for A/A+
+        } else if (forcedGPA >= 3.0) {
+            circleColor = Color.rgb(66, 133, 244); // Blue for B
+        } else if (forcedGPA >= 2.0) {
+            circleColor = Color.rgb(251, 188, 5); // Yellow for C
+        } else {
+            circleColor = SECONDARY_COLOR; // Red for D/F
+        }
+        
+        circle.setFill(circleColor);
+        
+        // Add inner glow effect
+        DropShadow innerGlow = new DropShadow();
+        innerGlow.setRadius(10);
+        innerGlow.setColor(circleColor.deriveColor(0, 1.2, 1, 0.3));
+        innerGlow.setOffsetX(0);
+        innerGlow.setOffsetY(0);
+        circle.setEffect(innerGlow);
+        
+        // GPA text inside circle
+        Text gpaText = new Text(String.format("%.1f", forcedGPA));
+        gpaText.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        gpaText.setFill(Color.WHITE);
+        
+        gpaCircle.getChildren().addAll(circle, gpaText);
+        
+        // GPA information
+        VBox gpaInfoBox = new VBox(2);
+        
+        Label gpaLabel = new Label("GPA");
+        gpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        gpaLabel.setTextFill(Color.rgb(100, 100, 100));
+        
+        Label gpaValueLabel = new Label(String.format("%.2f", forcedGPA));
+        gpaValueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        gpaValueLabel.setTextFill(circleColor);
+        
+        gpaInfoBox.getChildren().addAll(gpaLabel, gpaValueLabel);
+        
+        // Add divider for subjects
+        Region divider = new Region();
+        divider.setPrefHeight(1);
+        divider.setStyle("-fx-background-color: #e0e0e0;");
+        
+        gpaBox.getChildren().addAll(gpaCircle, gpaInfoBox);
         
         // Subject count
         Label subjectsLabel = new Label(String.format("Subjects: %d", semester.getSubjects().size()));
+        subjectsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        subjectsLabel.setTextFill(Color.rgb(100, 100, 100));
         
         // Button to view details
-        Button viewButton = new Button("View Details");
-        viewButton.setStyle("-fx-font-size: 12px;");
+        Button viewButton = createStyledButton("View Details", PRIMARY_COLOR);
+        viewButton.setTextFill(Color.WHITE);
+        viewButton.setPrefWidth(240);
         viewButton.setOnAction(e -> controller.navigateToSemesterDetails(semester));
         
         // Spacer to push the button to the bottom
         Region verticalSpacer = new Region();
         VBox.setVgrow(verticalSpacer, Priority.ALWAYS);
         
-        card.getChildren().addAll(headerBox, gpaLabel, subjectsLabel, verticalSpacer, viewButton);
+        cardContent.getChildren().addAll(headerBox, gpaBox, divider, subjectsLabel, verticalSpacer, viewButton);
         
         // Set up delete button event handler
         deleteButton.setOnAction(e -> showDeleteSemesterConfirmation(semester));
         
-        return card;
+        cardContainer.getChildren().addAll(cardBg, cardContent);
+        
+        return cardContainer;
     }
-    
     
     /**
      * Show a dialog to add a new semester
@@ -515,25 +878,47 @@ public class HomeView {
         dialog.setMinWidth(400);
         
         VBox dialogVBox = new VBox(20);
-        dialogVBox.setPadding(new Insets(20));
+        dialogVBox.setPadding(new Insets(30));
+        dialogVBox.setStyle("-fx-background-color: #f8f8ff;");
         
-        Label titleLabel = new Label("Add New Semester");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        // Title with style
+        Text titleText = new Text("Add New Semester");
+        titleText.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        titleText.setFill(PRIMARY_COLOR);
+        
+        // Add decorative underline
+        Rectangle underline = new Rectangle(100, 3);
+        underline.setFill(ACCENT_COLOR);
+        underline.setArcWidth(3);
+        underline.setArcHeight(3);
         
         Label nameLabel = new Label("Semester Name:");
+        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        nameLabel.setTextFill(PRIMARY_COLOR);
+        
         TextField nameField = new TextField();
         nameField.setPromptText("e.g., Fall 2024");
+        nameField.setPrefHeight(40);
+        styleTextField(nameField);
         
-        HBox buttonBox = new HBox(10);
+        HBox buttonBox = new HBox(15);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
         
-        Button cancelButton = new Button("Cancel");
-        Button addButton = new Button("Add");
+        Button cancelButton = createStyledButton("Cancel", LIGHT_GRAY);
+        cancelButton.setTextFill(Color.rgb(80, 80, 80));
+        cancelButton.setPrefWidth(100);
+        cancelButton.setPrefHeight(40);
+        
+        Button addButton = createStyledButton("Add", ACCENT_COLOR);
+        addButton.setTextFill(Color.WHITE);
+        addButton.setPrefWidth(100);
+        addButton.setPrefHeight(40);
         addButton.setDefaultButton(true);
         
         buttonBox.getChildren().addAll(cancelButton, addButton);
         
-        dialogVBox.getChildren().addAll(titleLabel, nameLabel, nameField, buttonBox);
+        dialogVBox.getChildren().addAll(titleText, underline, nameLabel, nameField, buttonBox);
         
         dialog.setScene(new javafx.scene.Scene(dialogVBox));
         
@@ -558,7 +943,6 @@ public class HomeView {
         dialog.showAndWait();
     }
     
-    
     /**
      * Show a confirmation dialog before deleting a semester
      * 
@@ -570,6 +954,14 @@ public class HomeView {
         alert.setHeaderText("Are you sure you want to delete " + semester.getName() + "?");
         alert.setContentText("This action cannot be undone. All subjects, grades, and assessments for this semester will be permanently deleted.");
         
+        // Style the alert dialog
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #f8f8ff; " +
+            "-fx-border-color: #e0e0e0; " +
+            "-fx-border-width: 1px; " +
+            "-fx-font-size: 14px;"
+        );
+        
         // Customize the buttons
         ButtonType deleteButton = new ButtonType("Delete", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -577,7 +969,7 @@ public class HomeView {
         
         // Make the delete button red
         Button deleteButtonObj = (Button) alert.getDialogPane().lookupButton(deleteButton);
-        deleteButtonObj.setStyle("-fx-background-color: #ff4d4d; -fx-text-fill: white;");
+        deleteButtonObj.setStyle("-fx-background-color: " + toRgbString(SECONDARY_COLOR) + "; -fx-text-fill: white;");
         
         // Show the dialog and handle the result
         alert.showAndWait().ifPresent(buttonType -> {
@@ -615,12 +1007,21 @@ public class HomeView {
             
             // Color code based on difficulty
             if (requiredGPA > 3.7) {
-                requiredGpaLabel.setTextFill(Color.RED);
+                requiredGpaLabel.setTextFill(SECONDARY_COLOR); // Red for difficult
             } else if (requiredGPA > 3.0) {
-                requiredGpaLabel.setTextFill(Color.ORANGE);
+                requiredGpaLabel.setTextFill(Color.rgb(251, 188, 5)); // Yellow for moderate
             } else {
-                requiredGpaLabel.setTextFill(Color.GREEN);
+                requiredGpaLabel.setTextFill(ACCENT_COLOR); // Green for achievable
             }
+            
+            // Add animation
+            FadeTransition fadeInOut = new FadeTransition(Duration.millis(300), requiredGpaLabel);
+            fadeInOut.setFromValue(0.5);
+            fadeInOut.setToValue(1.0);
+            fadeInOut.setCycleCount(2);
+            fadeInOut.setAutoReverse(true);
+            fadeInOut.play();
+            
         } catch (NumberFormatException e) {
             showErrorAlert("Error", "Please enter a valid number for GPA goal");
         } catch (Exception e) {
@@ -629,120 +1030,9 @@ public class HomeView {
     }
     
     /**
-     * Calculate and display the overall GPA across all semesters
-     */
-    private void updateOverallGPA() {
-        try {
-            System.out.println("\n===== CALCULATING OVERALL GPA FOR HOME VIEW =====");
-            
-            // Get all semesters with fresh data
-            List<Semester> semesters = controller.getAllSemesters();
-            
-            double totalGPA = 0.0;
-            int validSemesterCount = 0;
-            
-            System.out.println("Processing " + semesters.size() + " semesters for overall GPA");
-            
-            for (Semester semester : semesters) {
-                // Calculate semester GPA directly to ensure it's fresh
-                double semesterGPA = 0.0;
-                int validSubjectCount = 0;
-                
-                System.out.println("  Semester: " + semester.getName() + ", ID: " + semester.getId());
-                
-                for (Subject subject : semester.getSubjects()) {
-                    // Calculate subject GPA
-                    double subjectGPA = subject.calculateGPA();
-                    System.out.println("    Subject: " + subject.getName() + ", GPA: " + subjectGPA);
-                    
-                    if (subjectGPA > 0) {
-                        semesterGPA += subjectGPA;
-                        validSubjectCount++;
-                    }
-                }
-                
-                // Calculate average for this semester
-                double averageSemesterGPA = validSubjectCount > 0 ? semesterGPA / validSubjectCount : 0.0;
-                System.out.println("  Semester average GPA: " + averageSemesterGPA);
-                
-                if (averageSemesterGPA > 0) {
-                    totalGPA += averageSemesterGPA;
-                    validSemesterCount++;
-                }
-            }
-            
-            // Calculate overall GPA
-            double overallGPA = validSemesterCount > 0 ? totalGPA / validSemesterCount : 0.0;
-            System.out.println("Overall GPA across all semesters: " + overallGPA);
-            
-            // Update the UI
-            overallGpaLabel.setText(String.format("%.2f", overallGPA));
-            
-            System.out.println("===== OVERALL GPA CALCULATION COMPLETE =====\n");
-        } catch (Exception e) {
-            System.err.println("Error calculating overall GPA: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
-    /**
      * Force update of all UI elements with fresh data
      * This is a more direct approach when event-based updates aren't working
      */
-//    public void forceUpdateUI() {
-//        try {
-//            System.out.println("\n===== FORCE UPDATING HOME VIEW UI =====");
-//            
-//            // Clear the semesters pane
-//            semestersPane.getChildren().clear();
-//            
-//            // Get fresh data from the database
-//            List<Semester> semesters = controller.getAllSemesters();
-//            
-//            if (semesters.isEmpty()) {
-//                Label noSemestersLabel = new Label("You don't have any semesters yet");
-//                noSemestersLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-//                semestersPane.getChildren().add(noSemestersLabel);
-//            } else {
-//                // Calculate overall GPA directly here
-//                double totalGPA = 0.0;
-//                int validSemesterCount = 0;
-//                
-//                for (Semester semester : semesters) {
-//                    // Force GPA calculation for each semester
-//                    double semesterGPA = semester.calculateGPA();
-//                    System.out.println("Semester: " + semester.getName() + ", GPA: " + semesterGPA);
-//                    
-//                    // Only count valid GPAs
-//                    if (semesterGPA > 0) {
-//                        totalGPA += semesterGPA;
-//                        validSemesterCount++;
-//                    }
-//                    
-//                    // Add semester card with forced GPA calculation
-//                    VBox semesterCard = createSemesterCardWithForcedGPA(semester, semesterGPA);
-//                    semestersPane.getChildren().add(semesterCard);
-//                }
-//                
-//                // Update overall GPA label
-//                double overallGPA = validSemesterCount > 0 ? totalGPA / validSemesterCount : 0.0;
-//                System.out.println("Overall GPA (direct calculation): " + overallGPA);
-//                
-//                // Update the label directly
-//                Platform.runLater(() -> {
-//                    overallGpaLabel.setText(String.format("%.2f", overallGPA));
-//                    System.out.println("Overall GPA label updated to: " + overallGpaLabel.getText());
-//                });
-//            }
-//            
-//            System.out.println("===== HOME VIEW UI UPDATE COMPLETE =====\n");
-//        } catch (Exception e) {
-//            System.err.println("Error during force UI update: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-    
- // Replace the existing forceUpdateUI() method with this implementation
     public void forceUpdateUI() {
         try {
             System.out.println("\n===== FORCE UPDATING HOME VIEW UI =====");
@@ -754,9 +1044,26 @@ public class HomeView {
             List<Semester> semesters = controller.getAllSemesters();
             
             if (semesters.isEmpty()) {
-                Label noSemestersLabel = new Label("You don't have any semesters yet");
-                noSemestersLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-                semestersPane.getChildren().add(noSemestersLabel);
+                // Create a styled "no semesters" message
+                StackPane emptyPane = new StackPane();
+                emptyPane.setPrefWidth(800);
+                emptyPane.setPrefHeight(200);
+                
+                VBox emptyBox = new VBox(15);
+                emptyBox.setAlignment(Pos.CENTER);
+                
+                Text emptyText = new Text("You don't have any semesters yet");
+                emptyText.setFont(Font.font("Arial", FontWeight.NORMAL, 18));
+                emptyText.setFill(Color.rgb(120, 120, 140));
+                
+                Text addText = new Text("Click 'Add Semester' to get started");
+                addText.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+                addText.setFill(Color.rgb(150, 150, 170));
+                
+                emptyBox.getChildren().addAll(emptyText, addText);
+                emptyPane.getChildren().add(emptyBox);
+                
+                semestersPane.getChildren().add(emptyPane);
             } else {
                 // Calculate overall GPA directly here
                 double totalGPA = 0.0;
@@ -773,8 +1080,8 @@ public class HomeView {
                         validSemesterCount++;
                     }
                     
-                    // Add semester card with forced GPA calculation
-                    VBox semesterCard = createSemesterCardWithForcedGPA(semester, semesterGPA);
+                    // Add semester card with enhanced visuals
+                    StackPane semesterCard = createEnhancedSemesterCard(semester, semesterGPA);
                     semestersPane.getChildren().add(semesterCard);
                 }
                 
@@ -804,6 +1111,7 @@ public class HomeView {
             e.printStackTrace();
         }
     }
+    
     /**
      * This method aggressively calculates and displays GPAs
      * Call this after any operation that might affect GPAs
@@ -824,9 +1132,26 @@ public class HomeView {
             semestersPane.getChildren().clear();
             
             if (semesters.isEmpty()) {
-                Label noSemestersLabel = new Label("You don't have any semesters yet");
-                noSemestersLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
-                semestersPane.getChildren().add(noSemestersLabel);
+                // Create a styled "no semesters" message
+                StackPane emptyPane = new StackPane();
+                emptyPane.setPrefWidth(800);
+                emptyPane.setPrefHeight(200);
+                
+                VBox emptyBox = new VBox(15);
+                emptyBox.setAlignment(Pos.CENTER);
+                
+                Text emptyText = new Text("You don't have any semesters yet");
+                emptyText.setFont(Font.font("Arial", FontWeight.NORMAL, 18));
+                emptyText.setFill(Color.rgb(120, 120, 140));
+                
+                Text addText = new Text("Click 'Add Semester' to get started");
+                addText.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+                addText.setFill(Color.rgb(150, 150, 170));
+                
+                emptyBox.getChildren().addAll(emptyText, addText);
+                emptyPane.getChildren().add(emptyBox);
+                
+                semestersPane.getChildren().add(emptyPane);
                 
                 // Set overall GPA to 0
                 overallGpaLabel.setText("0.00");
@@ -838,52 +1163,8 @@ public class HomeView {
                     double semesterGPA = semester.calculateGPA();
                     System.out.println("Semester: " + semester.getName() + " - GPA: " + semesterGPA);
                     
-                    // Create a card with the forced GPA
-                    VBox card = new VBox(10);
-                    card.setPadding(new Insets(15));
-                    card.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-radius: 5; -fx-background-radius: 5;");
-                    card.setPrefWidth(250);
-                    card.setPrefHeight(150);
-                    
-                    // Header with semester name and delete button
-                    HBox headerBox = new HBox(10);
-                    headerBox.setAlignment(Pos.CENTER_LEFT);
-                    
-                    Label nameLabel = new Label(semester.getName());
-                    nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-                    
-                    Region spacer = new Region();
-                    HBox.setHgrow(spacer, Priority.ALWAYS);
-                    
-                    Button deleteButton = new Button("X");
-                    deleteButton.setStyle("-fx-background-color: #ff4d4d; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 25px; -fx-min-height: 25px; -fx-max-width: 25px; -fx-max-height: 25px; -fx-padding: 0;");
-                    
-                    headerBox.getChildren().addAll(nameLabel, spacer, deleteButton);
-                    
-                    // Use the forced GPA value directly
-                    Label gpaLabel = new Label(String.format("GPA: %.2f", semesterGPA));
-                    gpaLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-                    
-                    // Subject count
-                    Label subjectsLabel = new Label(String.format("Subjects: %d", semester.getSubjects().size()));
-                    
-                    // Button to view details
-                    Button viewButton = new Button("View Details");
-                    viewButton.setStyle("-fx-font-size: 12px;");
-                    final Semester finalSemester = semester; // Need final for lambda
-                    viewButton.setOnAction(e -> controller.navigateToSemesterDetails(finalSemester));
-                    
-                    // Spacer to push the button to the bottom
-                    Region verticalSpacer = new Region();
-                    VBox.setVgrow(verticalSpacer, Priority.ALWAYS);
-                    
-                    card.getChildren().addAll(headerBox, gpaLabel, subjectsLabel, verticalSpacer, viewButton);
-                    
-                    // Set up delete button event handler
-                    final Semester deleteSemester = semester; // Need final for lambda
-                    deleteButton.setOnAction(e -> showDeleteSemesterConfirmation(deleteSemester));
-                    
-                    // Add to semester pane
+                    // Create an enhanced card
+                    StackPane card = createEnhancedSemesterCard(semester, semesterGPA);
                     semestersPane.getChildren().add(card);
                     
                     // Count for overall GPA if valid
@@ -922,6 +1203,15 @@ public class HomeView {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        
+        // Style the alert dialog
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #f8f8ff; " +
+            "-fx-border-color: #e0e0e0; " +
+            "-fx-border-width: 1px; " +
+            "-fx-font-size: 14px;"
+        );
+        
         alert.showAndWait();
     }
     
@@ -936,11 +1226,21 @@ public class HomeView {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        
+        // Style the alert dialog
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #f8f8ff; " +
+            "-fx-border-color: #e0e0e0; " +
+            "-fx-border-width: 1px; " +
+            "-fx-font-size: 14px;"
+        );
+        
         alert.showAndWait();
     }
+    
+    
     
     public BorderPane getView() {
         return mainLayout;
     }
-    
 }
