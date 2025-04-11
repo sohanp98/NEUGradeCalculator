@@ -30,15 +30,14 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.ButtonBar;
 import javafx.application.Platform;
+import javafx.stage.Screen;
 
 import application.controllers.HomeController;
 import application.models.Semester;
-import application.models.Subject;
 import application.models.User;
 import application.services.UserService;
 import javafx.util.Duration;
@@ -63,6 +62,10 @@ public class HomeView {
     private static final Color BACKGROUND_COLOR = Color.rgb(245, 245, 255);
     private static final Color CARD_COLOR = Color.rgb(252, 252, 255);
     
+    // Screen dimensions for responsive design
+    private final double screenWidth = Screen.getPrimary().getVisualBounds().getWidth();
+    private final double screenHeight = Screen.getPrimary().getVisualBounds().getHeight();
+    
     /**
      * Constructor with forced UI update
      */
@@ -82,7 +85,6 @@ public class HomeView {
                 System.err.println("Interrupted while waiting to update UI: " + e.getMessage());
             }
         });
-        
     }
 
     /**
@@ -102,6 +104,15 @@ public class HomeView {
             
             mainLayout.setStyle("-fx-background-color: #f5f5ff;");
             mainLayout.setPadding(new Insets(20));
+            
+            // Enhanced size settings to ensure full-screen display
+            mainLayout.setPrefSize(screenWidth, screenHeight);
+            mainLayout.setMinSize(screenWidth, screenHeight);
+            mainLayout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+            
+            // Force the BorderPane to use all available space
+            VBox.setVgrow(mainLayout, Priority.ALWAYS);
+            HBox.setHgrow(mainLayout, Priority.ALWAYS);
             
             // Create background decorative elements
             createBackgroundElements();
@@ -172,6 +183,7 @@ public class HomeView {
         topBox.setAlignment(Pos.CENTER);
         topBox.setPadding(new Insets(10, 20, 25, 20));
         topBox.setSpacing(20);
+        topBox.setPrefWidth(screenWidth - 40); // Set preferred width to match screen
         
         // Left side - Logo and title
         HBox headerBox = new HBox(20);
@@ -251,9 +263,11 @@ public class HomeView {
         topBox.getChildren().addAll(headerBox, spacer, userBox);
         
         // Add colorful divider line
-        Rectangle colorBar = new Rectangle(1200, 4);
+        Rectangle colorBar = new Rectangle();
+        colorBar.setHeight(4);
         colorBar.setArcWidth(4);
         colorBar.setArcHeight(4);
+        colorBar.widthProperty().bind(mainLayout.widthProperty().subtract(40)); // Bind to layout width
         
         // Gradient for color bar
         LinearGradient barGradient = new LinearGradient(
@@ -272,6 +286,7 @@ public class HomeView {
         // Container for top elements
         VBox headerContainer = new VBox(15);
         headerContainer.getChildren().addAll(topBox, colorBar);
+        headerContainer.setPrefWidth(screenWidth - 40); // Set preferred width to match screen
         
         // Animate the header with fade in
         FadeTransition fadeIn = new FadeTransition(Duration.millis(800), headerContainer);
@@ -289,6 +304,7 @@ public class HomeView {
         VBox contentBox = new VBox(30);
         contentBox.setAlignment(Pos.CENTER);
         contentBox.setPadding(new Insets(30, 20, 20, 20));
+        contentBox.setPrefWidth(screenWidth - 40); // Set preferred width to match screen
         
         // Create GPA Summary Panel
         StackPane summaryPanel = createGpaSummaryPanel();
@@ -317,7 +333,7 @@ public class HomeView {
         
         // Create background panel
         Rectangle panelBg = new Rectangle();
-        panelBg.setWidth(900);
+        panelBg.setWidth(Math.min(900, screenWidth - 60)); // Responsive width
         panelBg.setHeight(180);
         panelBg.setArcWidth(20);
         panelBg.setArcHeight(20);
@@ -404,11 +420,13 @@ public class HomeView {
     private VBox createSemestersSection() {
         VBox semestersSection = new VBox(20);
         semestersSection.setAlignment(Pos.CENTER);
+        semestersSection.setPrefWidth(screenWidth - 60); // Responsive width
         
         // Create section title
         HBox titleBox = new HBox();
         titleBox.setAlignment(Pos.CENTER_LEFT);
         titleBox.setPadding(new Insets(10, 0, 5, 10));
+        titleBox.setPrefWidth(Math.min(900, screenWidth - 60)); // Responsive width
         
         Text semestersTitle = new Text("Your Semesters");
         semestersTitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
@@ -421,7 +439,7 @@ public class HomeView {
         semestersPane.setHgap(30);
         semestersPane.setVgap(30);
         semestersPane.setAlignment(Pos.CENTER);
-        semestersPane.setPrefWidth(900);
+        semestersPane.setPrefWidth(Math.min(900, screenWidth - 60)); // Responsive width
         semestersPane.setPadding(new Insets(20, 0, 20, 0));
         
         // Create 'Add Semester' button
@@ -458,6 +476,7 @@ public class HomeView {
         HBox footerBox = new HBox();
         footerBox.setAlignment(Pos.CENTER_RIGHT);
         footerBox.setPadding(new Insets(15, 30, 15, 30));
+        footerBox.setPrefWidth(screenWidth - 40); // Set preferred width to match screen
         
         Label versionLabel = new Label("Northeastern Grade Calculator v1.0");
         versionLabel.setFont(Font.font("Arial", 12));
@@ -639,7 +658,7 @@ public class HomeView {
             if (semesters.isEmpty()) {
                 // Create a styled "no semesters" message
                 StackPane emptyPane = new StackPane();
-                emptyPane.setPrefWidth(800);
+                emptyPane.setPrefWidth(Math.min(800, screenWidth - 100)); // Responsive width
                 emptyPane.setPrefHeight(200);
                 
                 VBox emptyBox = new VBox(15);
@@ -1046,7 +1065,7 @@ public class HomeView {
             if (semesters.isEmpty()) {
                 // Create a styled "no semesters" message
                 StackPane emptyPane = new StackPane();
-                emptyPane.setPrefWidth(800);
+                emptyPane.setPrefWidth(Math.min(800, screenWidth - 100)); // Responsive width
                 emptyPane.setPrefHeight(200);
                 
                 VBox emptyBox = new VBox(15);
@@ -1134,7 +1153,7 @@ public class HomeView {
             if (semesters.isEmpty()) {
                 // Create a styled "no semesters" message
                 StackPane emptyPane = new StackPane();
-                emptyPane.setPrefWidth(800);
+                emptyPane.setPrefWidth(Math.min(800, screenWidth - 100)); // Responsive width
                 emptyPane.setPrefHeight(200);
                 
                 VBox emptyBox = new VBox(15);
@@ -1238,9 +1257,42 @@ public class HomeView {
         alert.showAndWait();
     }
     
+    /**
+     * Sets the application to full screen mode.
+     * This method should be called after the stage is shown.
+     * @param stage The primary stage of the application
+     */
+    public void setFullScreen(javafx.stage.Stage stage) {
+        System.out.println("Setting stage to maximized");
+        stage.setMaximized(true);
+        
+        // Additional step to ensure full screen after a short delay
+        Platform.runLater(() -> {
+            try {
+                // Additional size adjustment after the stage is shown
+                mainLayout.setPrefSize(stage.getWidth(), stage.getHeight());
+                System.out.println("Adjusted size to stage dimensions: " + 
+                                 stage.getWidth() + "x" + stage.getHeight());
+            } catch (Exception e) {
+                System.err.println("Error in setFullScreen: " + e.getMessage());
+            }
+        });
+    }
     
-    
+    /**
+     * Get the main layout for this view.
+     * Additional sizing enforced here to ensure full screen display.
+     * @return The main layout
+     */
     public BorderPane getView() {
+        // Ensure the layout uses maximum available space
+        System.out.println("Getting HomeView with dimensions: " + 
+                         mainLayout.getPrefWidth() + "x" + mainLayout.getPrefHeight());
+        
+        // Force preferred width to screen width one more time before returning
+        mainLayout.setPrefWidth(screenWidth);
+        mainLayout.setPrefHeight(screenHeight);
+        
         return mainLayout;
     }
 }
