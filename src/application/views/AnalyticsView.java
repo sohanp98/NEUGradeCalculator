@@ -25,10 +25,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Screen;
+import javafx.application.Platform;
 
 import application.controllers.AnalyticsController;
 import application.models.Assessment;
@@ -39,6 +47,15 @@ import application.utils.AnalyticsUtility;
 import application.utils.ExportUtility;
 import application.utils.GradeCalculatorFactory;
 
+import javafx.stage.Stage;
+import javafx.stage.Modality;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.geometry.Insets;
+
 /**
  * View class for the analytics screen
  */
@@ -46,6 +63,16 @@ public class AnalyticsView {
     private BorderPane mainLayout;
     private AnalyticsController controller;
     private Semester semester;
+    
+    // Screen dimensions for responsive design
+    private final double screenWidth = Screen.getPrimary().getVisualBounds().getWidth();
+    private final double screenHeight = Screen.getPrimary().getVisualBounds().getHeight();
+    
+    // Define color constants for consistent styling
+    private static final Color PRIMARY_COLOR = Color.rgb(0, 59, 111); // Northeastern Blue
+    private static final Color SECONDARY_COLOR = Color.rgb(200, 16, 46); // Northeastern Red
+    private static final Color ACCENT_COLOR = Color.rgb(0, 173, 86); // Green for grades
+    private static final Color LIGHT_GRAY = Color.rgb(240, 240, 240);
     
     /**
      * Constructor for AnalyticsView
@@ -121,11 +148,22 @@ public class AnalyticsView {
             
             // Create the UI with the refreshed data
             mainLayout = new BorderPane();
+            mainLayout.setStyle("-fx-background-color: #f5f5ff;");
             mainLayout.setPadding(new Insets(20));
+            
+            // Enhanced size settings to ensure full-screen display
+            mainLayout.setPrefSize(screenWidth, screenHeight);
+            mainLayout.setMinSize(screenWidth, screenHeight);
+            mainLayout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+            
+            // Force the BorderPane to use all available space
+            VBox.setVgrow(mainLayout, Priority.ALWAYS);
+            HBox.setHgrow(mainLayout, Priority.ALWAYS);
             
             // Create header
             Label headerLabel = new Label("Analytics - " + semester.getName());
-            headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+            headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+            headerLabel.setTextFill(PRIMARY_COLOR);
             
             HBox headerBox = new HBox(20);
             headerBox.setAlignment(Pos.CENTER_LEFT);
@@ -133,21 +171,70 @@ public class AnalyticsView {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
             
-            Button backButton = new Button("Back to Semester");
-            Button exportButton = new Button("Export Reports");
+            // Create styled buttons to match other views
+            Button exportButton = createStyledButton("Export Reports", ACCENT_COLOR);
+            exportButton.setTextFill(Color.WHITE);
+            exportButton.setPrefWidth(150);
+            exportButton.setPrefHeight(40);
+            addButtonShadow(exportButton);
+            
+            Button backButton = createStyledButton("Back to Semester", LIGHT_GRAY);
+            backButton.setTextFill(PRIMARY_COLOR);
+            backButton.setPrefWidth(150);
+            backButton.setPrefHeight(40);
+            backButton.setStyle("-fx-background-color: white; -fx-border-color: " + toRgbString(PRIMARY_COLOR) + "; -fx-border-radius: 5; -fx-background-radius: 5;");
+            addButtonShadow(backButton);
             
             headerBox.getChildren().addAll(headerLabel, spacer, exportButton, backButton);
-            mainLayout.setTop(headerBox);
-            BorderPane.setMargin(headerBox, new Insets(0, 0, 20, 0));
             
-            // Create tab pane with fresh data
+            // Add a colored divider line
+            Rectangle colorBar = new Rectangle();
+            colorBar.setHeight(3);
+            colorBar.widthProperty().bind(mainLayout.widthProperty().subtract(40));
+            
+            // Create gradient for color bar
+            LinearGradient barGradient = new LinearGradient(
+                0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
+                new Stop(0, PRIMARY_COLOR),
+                new Stop(0.5, SECONDARY_COLOR),
+                new Stop(1, ACCENT_COLOR)
+            );
+            colorBar.setFill(barGradient);
+            
+            VBox headerWithDivider = new VBox(10);
+            headerWithDivider.getChildren().addAll(headerBox, colorBar);
+            
+            mainLayout.setTop(headerWithDivider);
+            BorderPane.setMargin(headerWithDivider, new Insets(0, 0, 20, 0));
+            
+            // Create a styled tab pane with container
+            StackPane tabContainer = new StackPane();
+            tabContainer.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+            tabContainer.setPadding(new Insets(5));
+            
+            // Add shadow to tab container
+            DropShadow shadow = new DropShadow();
+            shadow.setRadius(8);
+            shadow.setColor(Color.rgb(0, 0, 0, 0.15));
+            shadow.setOffsetY(3);
+            tabContainer.setEffect(shadow);
+            
             TabPane tabPane = new TabPane();
+            tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+            tabPane.setStyle(
+                "-fx-background-color: transparent; " +
+                "-fx-tab-min-width: 120px; " +
+                "-fx-tab-max-width: 120px; " +
+                "-fx-tab-min-height: 35px;"
+            );
             
             // Overview tab
             Tab overviewTab = new Tab("Overview");
             overviewTab.setClosable(false);
             ScrollPane overviewScrollPane = new ScrollPane();
             overviewScrollPane.setFitToWidth(true);
+            overviewScrollPane.setPrefWidth(screenWidth - 40);
+            overviewScrollPane.setStyle("-fx-background-color: transparent;");
             overviewScrollPane.setContent(createOverviewContent());
             overviewTab.setContent(overviewScrollPane);
             
@@ -156,6 +243,8 @@ public class AnalyticsView {
             distributionTab.setClosable(false);
             ScrollPane distributionScrollPane = new ScrollPane();
             distributionScrollPane.setFitToWidth(true);
+            distributionScrollPane.setPrefWidth(screenWidth - 40);
+            distributionScrollPane.setStyle("-fx-background-color: transparent;");
             distributionScrollPane.setContent(createDistributionContent());
             distributionTab.setContent(distributionScrollPane);
             
@@ -164,6 +253,8 @@ public class AnalyticsView {
             trendsTab.setClosable(false);
             ScrollPane trendsScrollPane = new ScrollPane();
             trendsScrollPane.setFitToWidth(true);
+            trendsScrollPane.setPrefWidth(screenWidth - 40);
+            trendsScrollPane.setStyle("-fx-background-color: transparent;");
             trendsScrollPane.setContent(createTrendsContent());
             trendsTab.setContent(trendsScrollPane);
             
@@ -172,6 +263,8 @@ public class AnalyticsView {
             projectionsTab.setClosable(false);
             ScrollPane projectionsScrollPane = new ScrollPane();
             projectionsScrollPane.setFitToWidth(true);
+            projectionsScrollPane.setPrefWidth(screenWidth - 40);
+            projectionsScrollPane.setStyle("-fx-background-color: transparent;");
             projectionsScrollPane.setContent(createProjectionsContent());
             projectionsTab.setContent(projectionsScrollPane);
             
@@ -180,11 +273,15 @@ public class AnalyticsView {
             recommendationsTab.setClosable(false);
             ScrollPane recommendationsScrollPane = new ScrollPane();
             recommendationsScrollPane.setFitToWidth(true);
+            recommendationsScrollPane.setPrefWidth(screenWidth - 40);
+            recommendationsScrollPane.setStyle("-fx-background-color: transparent;");
             recommendationsScrollPane.setContent(createRecommendationsContent());
             recommendationsTab.setContent(recommendationsScrollPane);
             
             tabPane.getTabs().addAll(overviewTab, distributionTab, trendsTab, projectionsTab, recommendationsTab);
-            mainLayout.setCenter(tabPane);
+            tabContainer.getChildren().add(tabPane);
+            
+            mainLayout.setCenter(tabContainer);
             
             // Set up event handlers
             backButton.setOnAction(e -> controller.navigateToSemesterView());
@@ -195,6 +292,108 @@ public class AnalyticsView {
             System.err.println("Error initializing analytics view: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Create a styled button with the specified text and background color
+     * 
+     * @param text The button text
+     * @param bgColor The background color
+     * @return The styled button
+     */
+    private Button createStyledButton(String text, Color bgColor) {
+        Button button = new Button(text);
+        button.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        
+        // Convert color to CSS format
+        String colorString = toRgbString(bgColor);
+        
+        // Style the button
+        button.setStyle(
+            "-fx-background-color: " + colorString + "; " +
+            "-fx-background-radius: 5; " +
+            "-fx-cursor: hand;"
+        );
+        
+        // Add hover effect
+        Color hoverColor = bgColor.darker();
+        String hoverColorString = toRgbString(hoverColor);
+        
+        button.setOnMouseEntered(e -> 
+            button.setStyle(
+                "-fx-background-color: " + hoverColorString + "; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;"
+            )
+        );
+        
+        button.setOnMouseExited(e -> 
+            button.setStyle(
+                "-fx-background-color: " + colorString + "; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;"
+            )
+        );
+        
+        return button;
+    }
+    
+    /**
+     * Add shadow to a button
+     * 
+     * @param button The button to add shadow to
+     */
+    private void addButtonShadow(Button button) {
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(5);
+        shadow.setOffsetY(2);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.2));
+        button.setEffect(shadow);
+    }
+    
+    /**
+     * Convert a JavaFX Color to an RGB string for CSS
+     */
+    private String toRgbString(Color color) {
+        return String.format(
+            "rgb(%d, %d, %d)",
+            (int) (color.getRed() * 255),
+            (int) (color.getGreen() * 255),
+            (int) (color.getBlue() * 255)
+        );
+    }
+    
+    /**
+     * Create a card-style container for content
+     * 
+     * @param content The content to display in the card
+     * @param title The title of the card
+     * @return A styled card container
+     */
+    private VBox createContentCard(String title, VBox content) {
+        VBox card = new VBox(15);
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20;");
+        card.setPrefWidth(screenWidth - 100);
+        
+        // Add shadow to card
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(8);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.15));
+        shadow.setOffsetY(3);
+        card.setEffect(shadow);
+        
+        // Create title if provided
+        if (title != null && !title.isEmpty()) {
+            Label titleLabel = new Label(title);
+            titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+            titleLabel.setTextFill(PRIMARY_COLOR);
+            card.getChildren().add(titleLabel);
+        }
+        
+        // Add all content
+        card.getChildren().addAll(content.getChildren());
+        
+        return card;
     }
     
     /**
@@ -246,16 +445,20 @@ public class AnalyticsView {
     private VBox createOverviewContent() {
         VBox content = new VBox(30);
         content.setPadding(new Insets(20));
-        
-        Label titleLabel = new Label("Semester Overview");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        content.setPrefWidth(screenWidth - 60);
+        content.setAlignment(Pos.CENTER);
         
         // First, get fresh subject data
         List<Subject> freshSubjects = loadFreshSubjectData();
         
         if (freshSubjects.isEmpty()) {
+            VBox noDataContent = new VBox(10);
             Label noSubjectsLabel = new Label("No subjects to analyze.");
-            content.getChildren().addAll(titleLabel, noSubjectsLabel);
+            noSubjectsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            noDataContent.getChildren().add(noSubjectsLabel);
+            
+            VBox emptyCard = createContentCard("Semester Overview", noDataContent);
+            content.getChildren().add(emptyCard);
             return content;
         }
         
@@ -274,8 +477,7 @@ public class AnalyticsView {
         double semesterGPA = validSubjectCount > 0 ? totalGPA / validSubjectCount : 0.0;
         
         // Semester GPA section
-        VBox gpaBox = new VBox(10);
-        gpaBox.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 15px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        VBox gpaContent = new VBox(10);
         
         Label gpaLabel = new Label("Semester GPA: " + String.format("%.2f", semesterGPA));
         gpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
@@ -297,21 +499,30 @@ public class AnalyticsView {
         }
         
         Label classificationLabel = new Label("Classification: " + gpaClassification);
+        classificationLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
         
-        gpaBox.getChildren().addAll(gpaLabel, classificationLabel);
+        gpaContent.getChildren().addAll(gpaLabel, classificationLabel);
+        
+        // Create a card for GPA section
+        VBox gpaCard = createContentCard("Semester Overview", gpaContent);
         
         // Subject performance section
-        Label subjectsSectionLabel = new Label("Subject Performance");
-        subjectsSectionLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        
-        VBox subjectsBox = new VBox(15);
+        VBox subjectsContent = new VBox(15);
         
         for (Subject subject : freshSubjects) {
-            BorderPane subjectPane = new BorderPane();
-            subjectPane.setStyle("-fx-background-color: #f0f0f0; -fx-padding: 10px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+            VBox subjectBox = new VBox(12);
+            subjectBox.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8; -fx-padding: 15;");
+            
+            // Add shadow to subject box
+            DropShadow subjectShadow = new DropShadow();
+            subjectShadow.setRadius(5);
+            subjectShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+            subjectShadow.setOffsetY(2);
+            subjectBox.setEffect(subjectShadow);
             
             Label subjectNameLabel = new Label(subject.getName());
-            subjectNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            subjectNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            subjectNameLabel.setTextFill(PRIMARY_COLOR);
             
             // Create a small bar chart for overall percentage
             CategoryAxis xAxis = new CategoryAxis();
@@ -356,8 +567,11 @@ public class AnalyticsView {
             percentageLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
             
             Label gradeLabel = new Label("Grade: " + letterGrade);
+            gradeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+            
             double gpa = subject.calculateGPA();
             Label gpaValueLabel = new Label("GPA: " + String.format("%.1f", gpa));
+            gpaValueLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
             
             // Assessment types summary
             StringBuilder assessmentSummary = new StringBuilder("Assessment Types: ");
@@ -377,6 +591,7 @@ public class AnalyticsView {
             
             Label assessmentTypesLabel = new Label(assessmentSummary.toString());
             assessmentTypesLabel.setWrapText(true);
+            assessmentTypesLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
             
             summaryBox.getChildren().addAll(percentageLabel, gradeLabel, gpaValueLabel, assessmentTypesLabel);
             
@@ -385,23 +600,28 @@ public class AnalyticsView {
             contentBox.setAlignment(Pos.CENTER_LEFT);
             contentBox.getChildren().addAll(chart, summaryBox);
             
-            subjectPane.setTop(subjectNameLabel);
-            subjectPane.setCenter(contentBox);
-            
-            BorderPane.setMargin(subjectNameLabel, new Insets(0, 0, 10, 0));
-            
-            subjectsBox.getChildren().add(subjectPane);
+            subjectBox.getChildren().addAll(subjectNameLabel, contentBox);
+            subjectsContent.getChildren().add(subjectBox);
         }
         
-        // Statistical summary
-        Label statisticsSectionLabel = new Label("Statistical Summary");
-        statisticsSectionLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        // Create a card for subjects section
+        VBox subjectsCard = createContentCard("Subject Performance", subjectsContent);
+        
+        // Statistical summary section
+        VBox statsContent = new VBox(15);
         
         GridPane statsGrid = new GridPane();
-        statsGrid.setHgap(20);
-        statsGrid.setVgap(10);
+        statsGrid.setHgap(30);
+        statsGrid.setVgap(12);
         statsGrid.setPadding(new Insets(15));
-        statsGrid.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 15px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        statsGrid.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8;");
+        
+        // Add shadow to stats grid
+        DropShadow gridShadow = new DropShadow();
+        gridShadow.setRadius(5);
+        gridShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+        gridShadow.setOffsetY(2);
+        statsGrid.setEffect(gridShadow);
         
         // Collect all assessment scores
         List<Double> allScores = new ArrayList<>();
@@ -422,27 +642,78 @@ public class AnalyticsView {
         // Calculate statistics
         Map<String, Double> stats = application.utils.AnalyticsUtility.calculateStatistics(allScores);
         
+        // Style for stat labels
+        Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
+        Font valueFont = Font.font("Arial", FontWeight.NORMAL, 14);
+        
         // Add statistics to grid
-        statsGrid.add(new Label("Total Assessments:"), 0, 0);
-        statsGrid.add(new Label(String.format("%.0f", stats.get("count"))), 1, 0);
+        Label countHeaderLabel = new Label("Total Assessments:");
+        countHeaderLabel.setFont(labelFont);
+        countHeaderLabel.setTextFill(PRIMARY_COLOR);
         
-        statsGrid.add(new Label("Minimum Score:"), 0, 1);
-        statsGrid.add(new Label(String.format("%.1f%%", stats.get("min"))), 1, 1);
+        Label countValueLabel = new Label(String.format("%.0f", stats.get("count")));
+        countValueLabel.setFont(valueFont);
         
-        statsGrid.add(new Label("Maximum Score:"), 0, 2);
-        statsGrid.add(new Label(String.format("%.1f%%", stats.get("max"))), 1, 2);
+        statsGrid.add(countHeaderLabel, 0, 0);
+        statsGrid.add(countValueLabel, 1, 0);
         
-        statsGrid.add(new Label("Mean Score:"), 0, 3);
-        statsGrid.add(new Label(String.format("%.1f%%", stats.get("mean"))), 1, 3);
+        Label minHeaderLabel = new Label("Minimum Score:");
+        minHeaderLabel.setFont(labelFont);
+        minHeaderLabel.setTextFill(PRIMARY_COLOR);
         
-        statsGrid.add(new Label("Median Score:"), 0, 4);
-        statsGrid.add(new Label(String.format("%.1f%%", stats.get("median"))), 1, 4);
+        Label minValueLabel = new Label(String.format("%.1f%%", stats.get("min")));
+        minValueLabel.setFont(valueFont);
         
-        statsGrid.add(new Label("Standard Deviation:"), 0, 5);
-        statsGrid.add(new Label(String.format("%.1f", stats.get("standardDeviation"))), 1, 5);
+        statsGrid.add(minHeaderLabel, 0, 1);
+        statsGrid.add(minValueLabel, 1, 1);
         
-        content.getChildren().addAll(titleLabel, gpaBox, subjectsSectionLabel, subjectsBox, 
-                                  statisticsSectionLabel, statsGrid);
+        Label maxHeaderLabel = new Label("Maximum Score:");
+        maxHeaderLabel.setFont(labelFont);
+        maxHeaderLabel.setTextFill(PRIMARY_COLOR);
+        
+        Label maxValueLabel = new Label(String.format("%.1f%%", stats.get("max")));
+        maxValueLabel.setFont(valueFont);
+        
+        statsGrid.add(maxHeaderLabel, 0, 2);
+        statsGrid.add(maxValueLabel, 1, 2);
+        
+        Label meanHeaderLabel = new Label("Mean Score:");
+        meanHeaderLabel.setFont(labelFont);
+        meanHeaderLabel.setTextFill(PRIMARY_COLOR);
+        
+        Label meanValueLabel = new Label(String.format("%.1f%%", stats.get("mean")));
+        meanValueLabel.setFont(valueFont);
+        
+        statsGrid.add(meanHeaderLabel, 0, 3);
+        statsGrid.add(meanValueLabel, 1, 3);
+        
+        Label medianHeaderLabel = new Label("Median Score:");
+        medianHeaderLabel.setFont(labelFont);
+        medianHeaderLabel.setTextFill(PRIMARY_COLOR);
+        
+        Label medianValueLabel = new Label(String.format("%.1f%%", stats.get("median")));
+        medianValueLabel.setFont(valueFont);
+        
+        statsGrid.add(medianHeaderLabel, 0, 4);
+        statsGrid.add(medianValueLabel, 1, 4);
+        
+        Label stdevHeaderLabel = new Label("Standard Deviation:");
+        stdevHeaderLabel.setFont(labelFont);
+        stdevHeaderLabel.setTextFill(PRIMARY_COLOR);
+        
+        Label stdevValueLabel = new Label(String.format("%.1f", stats.get("standardDeviation")));
+        stdevValueLabel.setFont(valueFont);
+        
+        statsGrid.add(stdevHeaderLabel, 0, 5);
+        statsGrid.add(stdevValueLabel, 1, 5);
+        
+        statsContent.getChildren().add(statsGrid);
+        
+        // Create a card for statistics section
+        VBox statsCard = createContentCard("Statistical Summary", statsContent);
+        
+        // Add all cards to the content
+        content.getChildren().addAll(gpaCard, subjectsCard, statsCard);
         
         return content;
     }
@@ -455,25 +726,25 @@ public class AnalyticsView {
     private VBox createDistributionContent() {
         VBox content = new VBox(30);
         content.setPadding(new Insets(20));
-        
-        Label titleLabel = new Label("Grade Distribution");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        content.setPrefWidth(screenWidth - 60);
+        content.setAlignment(Pos.CENTER);
         
         // Get fresh subject data
         List<Subject> freshSubjects = loadFreshSubjectData();
         
         if (freshSubjects.isEmpty()) {
+            VBox noDataContent = new VBox(10);
             Label noSubjectsLabel = new Label("No subjects to analyze.");
-            content.getChildren().addAll(titleLabel, noSubjectsLabel);
+            noSubjectsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            noDataContent.getChildren().add(noSubjectsLabel);
+            
+            VBox emptyCard = createContentCard("Grade Distribution", noDataContent);
+            content.getChildren().add(emptyCard);
             return content;
         }
         
         for (Subject subject : freshSubjects) {
-            VBox subjectBox = new VBox(15);
-            subjectBox.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 15px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-            
-            Label subjectLabel = new Label(subject.getName());
-            subjectLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            VBox subjectContent = new VBox(15);
             
             // Get scores for each assessment
             boolean hasAssessmentData = false;
@@ -503,10 +774,16 @@ public class AnalyticsView {
             
             if (!hasAssessmentData) {
                 Label noDistributionLabel = new Label("No assessment grades entered yet.");
-                subjectBox.getChildren().addAll(subjectLabel, noDistributionLabel);
+                noDistributionLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+                subjectContent.getChildren().add(noDistributionLabel);
             } else {
                 TabPane assessmentTabPane = new TabPane();
                 assessmentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+                assessmentTabPane.setStyle(
+                    "-fx-background-color: transparent; " +
+                    "-fx-tab-min-width: 120px; " +
+                    "-fx-tab-min-height: 35px;"
+                );
                 
                 // Create a summary tab for all assessments combined
                 Tab summaryTab = new Tab("All Assessments");
@@ -615,14 +892,16 @@ public class AnalyticsView {
                     assessmentTabPane.getTabs().add(typeTab);
                 }
                 
-                subjectBox.getChildren().addAll(subjectLabel, assessmentTabPane);
+                subjectContent.getChildren().add(assessmentTabPane);
             }
             
-            content.getChildren().add(subjectBox);
+            VBox subjectCard = createContentCard(subject.getName(), subjectContent);
+            content.getChildren().add(subjectCard);
         }
         
         return content;
     }
+    
     /**
      * Create content for the trends tab
      * 
@@ -631,27 +910,27 @@ public class AnalyticsView {
     private VBox createTrendsContent() {
         VBox content = new VBox(30);
         content.setPadding(new Insets(20));
-        
-        Label titleLabel = new Label("Grade Trends");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        content.setPrefWidth(screenWidth - 60);
+        content.setAlignment(Pos.CENTER);
         
         // Get fresh subject data
         List<Subject> freshSubjects = loadFreshSubjectData();
         
         if (freshSubjects.isEmpty()) {
+            VBox noDataContent = new VBox(10);
             Label noSubjectsLabel = new Label("No subjects to analyze.");
-            content.getChildren().addAll(titleLabel, noSubjectsLabel);
+            noSubjectsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            noDataContent.getChildren().add(noSubjectsLabel);
+            
+            VBox emptyCard = createContentCard("Grade Trends", noDataContent);
+            content.getChildren().add(emptyCard);
             return content;
         }
         
         boolean anyTrendsFound = false;
         
         for (Subject subject : freshSubjects) {
-            VBox subjectBox = new VBox(15);
-            subjectBox.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 15px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-            
-            Label subjectLabel = new Label(subject.getName());
-            subjectLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            VBox subjectContent = new VBox(15);
             
             // Find assessments with scores > 0
             Map<String, List<Map.Entry<String, Double>>> assessmentsByType = new HashMap<>();
@@ -728,13 +1007,19 @@ public class AnalyticsView {
             
             if (assessmentsByType.isEmpty()) {
                 Label noTrendLabel = new Label("No assessment data to analyze trends.");
-                subjectBox.getChildren().addAll(subjectLabel, noTrendLabel);
+                noTrendLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+                subjectContent.getChildren().add(noTrendLabel);
             } else {
                 anyTrendsFound = true;
                 
                 // Create tab pane for assessment types
                 TabPane trendTabPane = new TabPane();
                 trendTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+                trendTabPane.setStyle(
+                    "-fx-background-color: transparent; " +
+                    "-fx-tab-min-width: 120px; " +
+                    "-fx-tab-min-height: 35px;"
+                );
                 
                 // Create a tab for each assessment type
                 for (Map.Entry<String, List<Map.Entry<String, Double>>> entry : assessmentsByType.entrySet()) {
@@ -770,6 +1055,14 @@ public class AnalyticsView {
                     // Add trend analysis
                     VBox analysisBox = new VBox(10);
                     analysisBox.setPadding(new Insets(15));
+                    analysisBox.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8;");
+                    
+                    // Add shadow to analysis box
+                    DropShadow analysisShadow = new DropShadow();
+                    analysisShadow.setRadius(5);
+                    analysisShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+                    analysisShadow.setOffsetY(2);
+                    analysisBox.setEffect(analysisShadow);
                     
                     // Calculate trend direction
                     String trendDirection;
@@ -793,6 +1086,7 @@ public class AnalyticsView {
                     
                     Label directionLabel = new Label("Trend Direction: " + trendDirection);
                     directionLabel.setWrapText(true);
+                    directionLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
                     
                     // Calculate average
                     double sum = 0.0;
@@ -802,6 +1096,7 @@ public class AnalyticsView {
                     double average = assessments.isEmpty() ? 0 : sum / assessments.size();
                     
                     Label averageLabel = new Label("Average Score: " + String.format("%.1f%%", average));
+                    averageLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
                     
                     analysisBox.getChildren().addAll(directionLabel, averageLabel);
                     
@@ -810,18 +1105,24 @@ public class AnalyticsView {
                     trendTabPane.getTabs().add(typeTab);
                 }
                 
-                subjectBox.getChildren().addAll(subjectLabel, trendTabPane);
+                subjectContent.getChildren().add(trendTabPane);
             }
             
-            content.getChildren().add(subjectBox);
+            VBox subjectCard = createContentCard(subject.getName() + " Trends", subjectContent);
+            content.getChildren().add(subjectCard);
         }
         
         if (!anyTrendsFound) {
+            VBox noDataContent = new VBox(10);
             Label noTrendsLabel = new Label(
                 "No assessment grades found for any subjects. Enter grades through the 'Input Grades' option."
             );
             noTrendsLabel.setWrapText(true);
-            content.getChildren().add(noTrendsLabel);
+            noTrendsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            noDataContent.getChildren().add(noTrendsLabel);
+            
+            VBox emptyCard = createContentCard("Grade Trends", noDataContent);
+            content.getChildren().add(emptyCard);
         }
         
         return content;
@@ -835,9 +1136,8 @@ public class AnalyticsView {
     private VBox createProjectionsContent() {
         VBox content = new VBox(30);
         content.setPadding(new Insets(20));
-        
-        Label titleLabel = new Label("GPA Projections");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        content.setPrefWidth(screenWidth - 60);
+        content.setAlignment(Pos.CENTER);
         
         // Get fresh subject data
         List<Subject> freshSubjects = loadFreshSubjectData();
@@ -921,12 +1221,12 @@ public class AnalyticsView {
         }
         
         // Create projections display
-        VBox projectionsBox = new VBox(15);
-        projectionsBox.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 15px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        VBox projectionsContent = new VBox(20);
         
         // Current GPA
         Label currentGpaLabel = new Label("Current Overall GPA: " + String.format("%.2f", overallGPA));
-        currentGpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        currentGpaLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        currentGpaLabel.setTextFill(PRIMARY_COLOR);
         
         // Create bar chart for GPA projections
         CategoryAxis xAxis = new CategoryAxis();
@@ -947,19 +1247,47 @@ public class AnalyticsView {
         
         chart.getData().add(series);
         
+        // Style the chart bars
+        series.getData().get(0).getNode().setStyle("-fx-bar-fill: #6495ED;"); // Current - Blue
+        series.getData().get(1).getNode().setStyle("-fx-bar-fill: #32CD32;"); // Best - Green
+        series.getData().get(2).getNode().setStyle("-fx-bar-fill: #FFA500;"); // Realistic - Orange
+        series.getData().get(3).getNode().setStyle("-fx-bar-fill: #FF6347;"); // Worst - Red
+        
         // GPA goals section
         Label goalsLabel = new Label("GPA Goals");
-        goalsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        goalsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        goalsLabel.setTextFill(PRIMARY_COLOR);
+        goalsLabel.setPadding(new Insets(15, 0, 10, 0));
         
         GridPane goalsGrid = new GridPane();
-        goalsGrid.setHgap(15);
-        goalsGrid.setVgap(10);
+        goalsGrid.setHgap(25);
+        goalsGrid.setVgap(12);
         goalsGrid.setPadding(new Insets(15));
+        goalsGrid.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8;");
+        
+        // Add shadow to goals grid
+        DropShadow gridShadow = new DropShadow();
+        gridShadow.setRadius(5);
+        gridShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+        gridShadow.setOffsetY(2);
+        goalsGrid.setEffect(gridShadow);
         
         // Add headers
-        goalsGrid.add(new Label("Target GPA"), 0, 0);
-        goalsGrid.add(new Label("Required GPA for Future Semesters"), 1, 0);
-        goalsGrid.add(new Label("Difficulty"), 2, 0);
+        Label targetLabel = new Label("Target GPA");
+        targetLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        targetLabel.setTextFill(PRIMARY_COLOR);
+        
+        Label requiredLabel = new Label("Required GPA for Future Semesters");
+        requiredLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        requiredLabel.setTextFill(PRIMARY_COLOR);
+        
+        Label difficultyLabel = new Label("Difficulty");
+        difficultyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        difficultyLabel.setTextFill(PRIMARY_COLOR);
+        
+        goalsGrid.add(targetLabel, 0, 0);
+        goalsGrid.add(requiredLabel, 1, 0);
+        goalsGrid.add(difficultyLabel, 2, 0);
         
         // Add rows for different GPA targets
         double[] targets = {3.0, 3.3, 3.5, 3.7, 4.0};
@@ -977,43 +1305,52 @@ public class AnalyticsView {
             
             // Calculate difficulty
             String difficulty;
-            String difficultyColor;
+            Color difficultyColor;
             
             if (requiredGPA > 4.0) {
                 difficulty = "Not Possible";
-                difficultyColor = "red";
+                difficultyColor = Color.RED;
             } else if (requiredGPA > 3.7) {
                 difficulty = "Very Hard";
-                difficultyColor = "red";
+                difficultyColor = Color.RED;
             } else if (requiredGPA > 3.3) {
                 difficulty = "Hard";
-                difficultyColor = "orange";
+                difficultyColor = Color.ORANGE;
             } else if (requiredGPA > 3.0) {
                 difficulty = "Moderate";
-                difficultyColor = "blue";
+                difficultyColor = Color.BLUE;
             } else {
                 difficulty = "Achievable";
-                difficultyColor = "green";
+                difficultyColor = Color.GREEN;
             }
             
-            goalsGrid.add(new Label(String.format("%.1f", targetGPA)), 0, i + 1);
+            Label targetValueLabel = new Label(String.format("%.1f", targetGPA));
+            targetValueLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+            
+            goalsGrid.add(targetValueLabel, 0, i + 1);
             
             if (requiredGPA > 4.0) {
                 Label notPossibleLabel = new Label("Not achievable");
-                notPossibleLabel.setTextFill(javafx.scene.paint.Color.RED);
+                notPossibleLabel.setTextFill(Color.RED);
+                notPossibleLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
                 goalsGrid.add(notPossibleLabel, 1, i + 1);
             } else {
-                goalsGrid.add(new Label(String.format("%.2f", requiredGPA)), 1, i + 1);
+                Label requiredValueLabel = new Label(String.format("%.2f", requiredGPA));
+                requiredValueLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+                goalsGrid.add(requiredValueLabel, 1, i + 1);
             }
             
-            Label difficultyLabel = new Label(difficulty);
-            difficultyLabel.setTextFill(javafx.scene.paint.Color.web(difficultyColor));
-            goalsGrid.add(difficultyLabel, 2, i + 1);
+            Label difficultyValueLabel = new Label(difficulty);
+            difficultyValueLabel.setTextFill(difficultyColor);
+            difficultyValueLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+            goalsGrid.add(difficultyValueLabel, 2, i + 1);
         }
         
-        projectionsBox.getChildren().addAll(currentGpaLabel, chart, goalsLabel, goalsGrid);
+        projectionsContent.getChildren().addAll(currentGpaLabel, chart, goalsLabel, goalsGrid);
         
-        content.getChildren().addAll(titleLabel, projectionsBox);
+        // Create a card for projections
+        VBox projectionsCard = createContentCard("GPA Projections", projectionsContent);
+        content.getChildren().add(projectionsCard);
         
         return content;
     }
@@ -1026,27 +1363,27 @@ public class AnalyticsView {
     private VBox createRecommendationsContent() {
         VBox content = new VBox(30);
         content.setPadding(new Insets(20));
-        
-        Label titleLabel = new Label("Recommendations");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        content.setPrefWidth(screenWidth - 60);
+        content.setAlignment(Pos.CENTER);
         
         // Get fresh subject data
         List<Subject> freshSubjects = loadFreshSubjectData();
         
         if (freshSubjects.isEmpty()) {
+            VBox noDataContent = new VBox(10);
             Label noSubjectsLabel = new Label("No subjects to analyze.");
-            content.getChildren().addAll(titleLabel, noSubjectsLabel);
+            noSubjectsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            noDataContent.getChildren().add(noSubjectsLabel);
+            
+            VBox emptyCard = createContentCard("Recommendations", noDataContent);
+            content.getChildren().add(emptyCard);
             return content;
         }
         
         boolean anyRecommendations = false;
         
         for (Subject subject : freshSubjects) {
-            VBox subjectBox = new VBox(15);
-            subjectBox.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 15px; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-            
-            Label subjectLabel = new Label(subject.getName());
-            subjectLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            VBox subjectContent = new VBox(15);
             
             // Get assessment data
             boolean hasGradedAssessments = false;
@@ -1075,19 +1412,32 @@ public class AnalyticsView {
                 // No grades entered yet
                 VBox noGradesBox = new VBox(10);
                 Label noGradesLabel = new Label("No grades have been entered for this subject yet.");
+                noGradesLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
                 
                 Label enterGradesLabel = new Label(
                     "Enter grades using the 'Input Grades' button on the subject card to see recommendations."
                 );
                 enterGradesLabel.setWrapText(true);
+                enterGradesLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
                 
                 noGradesBox.getChildren().addAll(noGradesLabel, enterGradesLabel);
-                subjectBox.getChildren().addAll(subjectLabel, noGradesBox);
+                subjectContent.getChildren().add(noGradesBox);
             } else {
                 anyRecommendations = true;
                 
                 // Create recommendations list
-                VBox recommendationsBox = new VBox(10);
+                VBox recommendationsBox = new VBox(15);
+                
+                // Create recommendations content
+                VBox statusBox = new VBox(8);
+                statusBox.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8; -fx-padding: 15;");
+                
+             // Add shadow to status box
+                DropShadow boxShadow = new DropShadow();
+                boxShadow.setRadius(5);
+                boxShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+                boxShadow.setOffsetY(2);
+                statusBox.setEffect(boxShadow);
                 
                 // Overall status
                 Label currentStatusLabel = new Label(
@@ -1095,15 +1445,28 @@ public class AnalyticsView {
                     ", Grade: " + letterGrade + 
                     ", GPA: " + String.format("%.1f", subject.calculateGPA())
                 );
-                currentStatusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+                currentStatusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
                 
-                recommendationsBox.getChildren().add(currentStatusLabel);
+                // Set color based on grade
+                if (letterGrade.startsWith("A")) {
+                    currentStatusLabel.setTextFill(Color.GREEN);
+                } else if (letterGrade.startsWith("B")) {
+                    currentStatusLabel.setTextFill(Color.BLUE);
+                } else if (letterGrade.startsWith("C")) {
+                    currentStatusLabel.setTextFill(Color.ORANGE);
+                } else {
+                    currentStatusLabel.setTextFill(Color.RED);
+                }
+                
+                statusBox.getChildren().add(currentStatusLabel);
                 
                 // Main recommendation based on current grade
-                Text mainRecommendation = new Text();
+                Label mainRecommendationLabel = new Label();
+                mainRecommendationLabel.setWrapText(true);
+                mainRecommendationLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
                 
                 if (letterGrade.equals("A")) {
-                    mainRecommendation.setText(
+                    mainRecommendationLabel.setText(
                         "Excellent work! You're performing at an A level. Keep up the great work."
                     );
                 } else {
@@ -1159,23 +1522,33 @@ public class AnalyticsView {
                     }
                     
                     if (hasPendingAssessments) {
-                        mainRecommendation.setText(
+                        mainRecommendationLabel.setText(
                             "You need to increase your overall percentage by " + 
                             String.format("%.1f", pointsNeeded) + 
                             " points to achieve a " + nextGrade + " grade."
                         );
                     } else {
-                        mainRecommendation.setText(
+                        mainRecommendationLabel.setText(
                             "All assessments are finalized. Your final grade is " + letterGrade + "."
                         );
                     }
                 }
                 
-                mainRecommendation.setWrappingWidth(600);
-                recommendationsBox.getChildren().add(mainRecommendation);
+                statusBox.getChildren().add(mainRecommendationLabel);
+                recommendationsBox.getChildren().add(statusBox);
                 
                 // Add specific recommendations for pending assessments
                 if (hasPendingAssessments) {
+                    VBox pendingBox = new VBox(10);
+                    pendingBox.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8; -fx-padding: 15;");
+                    
+                    // Add shadow to pending box
+                    DropShadow pendingShadow = new DropShadow();
+                    pendingShadow.setRadius(5);
+                    pendingShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+                    pendingShadow.setOffsetY(2);
+                    pendingBox.setEffect(pendingShadow);
+                    
                     // Find pending assessments grouped by type
                     Map<String, List<Assessment>> pendingByType = new HashMap<>();
                     
@@ -1197,24 +1570,26 @@ public class AnalyticsView {
                     
                     if (!pendingByType.isEmpty()) {
                         Label pendingLabel = new Label("Pending Assessments:");
-                        pendingLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-                        pendingLabel.setPadding(new Insets(10, 0, 5, 0));
+                        pendingLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+                        pendingLabel.setTextFill(PRIMARY_COLOR);
                         
-                        recommendationsBox.getChildren().add(pendingLabel);
+                        pendingBox.getChildren().add(pendingLabel);
                         
                         // Add each type of pending assessment
                         for (Map.Entry<String, List<Assessment>> entry : pendingByType.entrySet()) {
                             String typeName = entry.getKey();
                             List<Assessment> assessments = entry.getValue();
                             
-                            Text pendingText = new Text(
+                            Label pendingText = new Label(
                                 typeName + ": " + assessments.size() + " assessment(s) pending finalization. " +
                                 "Focus on these to improve your grade."
                             );
-                            pendingText.setWrappingWidth(600);
+                            pendingText.setWrapText(true);
+                            pendingText.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
                             
-                            recommendationsBox.getChildren().add(pendingText);
+                            pendingBox.getChildren().add(pendingText);
                         }
+                        recommendationsBox.getChildren().add(pendingBox);
                     }
                 }
                 
@@ -1222,11 +1597,21 @@ public class AnalyticsView {
                 boolean hasEnoughGrades = totalGradedAssessments >= 3;
                 
                 if (hasEnoughGrades) {
-                    Label strengthsWeaknessesLabel = new Label("Strengths and Areas for Improvement");
-                    strengthsWeaknessesLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-                    strengthsWeaknessesLabel.setPadding(new Insets(15, 0, 5, 0));
+                    VBox strengthsWeaknessesBox = new VBox(10);
+                    strengthsWeaknessesBox.setStyle("-fx-background-color: #f8f8ff; -fx-background-radius: 8; -fx-padding: 15;");
                     
-                    recommendationsBox.getChildren().add(strengthsWeaknessesLabel);
+                    // Add shadow to strengths/weaknesses box
+                    DropShadow swShadow = new DropShadow();
+                    swShadow.setRadius(5);
+                    swShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+                    swShadow.setOffsetY(2);
+                    strengthsWeaknessesBox.setEffect(swShadow);
+                    
+                    Label strengthsWeaknessesLabel = new Label("Strengths and Areas for Improvement");
+                    strengthsWeaknessesLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+                    strengthsWeaknessesLabel.setTextFill(PRIMARY_COLOR);
+                    
+                    strengthsWeaknessesBox.getChildren().add(strengthsWeaknessesLabel);
                     
                     // Find best and worst assessment types
                     String bestType = null;
@@ -1270,42 +1655,53 @@ public class AnalyticsView {
                     
                     // Add strengths and weaknesses
                     if (bestType != null && bestAverage > 0) {
-                        Text strengthText = new Text("Strength: " + bestType + 
+                        Label strengthLabel = new Label("Strength: " + bestType + 
                             " - Average score: " + String.format("%.1f%%", bestAverage));
-                        strengthText.setFill(Color.GREEN);
-                        recommendationsBox.getChildren().add(strengthText);
+                        strengthLabel.setTextFill(Color.GREEN);
+                        strengthLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+                        strengthsWeaknessesBox.getChildren().add(strengthLabel);
                     }
                     
                     if (worstType != null && worstAverage < 100) {
-                        Text weaknessText = new Text("Area for Improvement: " + worstType + 
+                        Label weaknessLabel = new Label("Area for Improvement: " + worstType + 
                             " - Average score: " + String.format("%.1f%%", worstAverage));
-                        weaknessText.setFill(Color.RED);
-                        recommendationsBox.getChildren().add(weaknessText);
+                        weaknessLabel.setTextFill(Color.RED);
+                        weaknessLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+                        strengthsWeaknessesBox.getChildren().add(weaknessLabel);
                         
                         // Add a specific recommendation
                         if (worstAverage < 70) {
-                            Text improvementText = new Text(
+                            Label improvementLabel = new Label(
                                 "Consider getting additional help or putting more focus on " + 
                                 worstType.toLowerCase() + " to improve your overall grade."
                             );
-                            improvementText.setWrappingWidth(600);
-                            recommendationsBox.getChildren().add(improvementText);
+                            improvementLabel.setWrapText(true);
+                            improvementLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+                            strengthsWeaknessesBox.getChildren().add(improvementLabel);
                         }
                     }
+                    
+                    recommendationsBox.getChildren().add(strengthsWeaknessesBox);
                 }
                 
-                subjectBox.getChildren().addAll(subjectLabel, recommendationsBox);
+                subjectContent.getChildren().add(recommendationsBox);
             }
             
-            content.getChildren().add(subjectBox);
+            VBox subjectCard = createContentCard(subject.getName(), subjectContent);
+            content.getChildren().add(subjectCard);
         }
         
         if (!anyRecommendations) {
+            VBox noDataContent = new VBox(10);
             Label noRecommendationsLabel = new Label(
                 "No recommendations available. Enter grades for your subjects to see personalized recommendations."
             );
             noRecommendationsLabel.setWrapText(true);
-            content.getChildren().add(noRecommendationsLabel);
+            noRecommendationsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+            noDataContent.getChildren().add(noRecommendationsLabel);
+            
+            VBox emptyCard = createContentCard("Recommendations", noDataContent);
+            content.getChildren().add(emptyCard);
         }
         
         return content;
@@ -1346,28 +1742,57 @@ public class AnalyticsView {
         dialog.setMinWidth(400);
         
         VBox dialogVBox = new VBox(20);
-        dialogVBox.setPadding(new Insets(20));
+        dialogVBox.setPadding(new Insets(25));
+        dialogVBox.setStyle("-fx-background-color: #f8f8ff;");
         
         Label titleLabel = new Label("Export Options");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        titleLabel.setTextFill(PRIMARY_COLOR);
         
-        // Export buttons
-        Button exportCsvButton = new Button("Export to CSV");
+        // Create a styled underline
+        Rectangle underline = new Rectangle(100, 3);
+        underline.setFill(ACCENT_COLOR);
+        underline.setArcWidth(3);
+        underline.setArcHeight(3);
+        
+        // Export buttons with styling
+        Button exportCsvButton = createStyledButton("Export to CSV", PRIMARY_COLOR);
+        exportCsvButton.setTextFill(Color.WHITE);
         exportCsvButton.setPrefWidth(200);
+        exportCsvButton.setPrefHeight(40);
+        addButtonShadow(exportCsvButton);
         
-        Button exportHtmlButton = new Button("Export to HTML");
+        Button exportHtmlButton = createStyledButton("Export to HTML", PRIMARY_COLOR);
+        exportHtmlButton.setTextFill(Color.WHITE);
         exportHtmlButton.setPrefWidth(200);
+        exportHtmlButton.setPrefHeight(40);
+        addButtonShadow(exportHtmlButton);
         
-        Button cancelButton = new Button("Cancel");
+        Button cancelButton = createStyledButton("Cancel", LIGHT_GRAY);
+        cancelButton.setTextFill(Color.rgb(80, 80, 80));
         cancelButton.setPrefWidth(200);
+        cancelButton.setPrefHeight(40);
+        cancelButton.setStyle("-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-radius: 5; -fx-background-radius: 5;");
+        addButtonShadow(cancelButton);
         
-        VBox buttonsBox = new VBox(10);
+        VBox buttonsBox = new VBox(15);
         buttonsBox.setAlignment(Pos.CENTER);
         buttonsBox.getChildren().addAll(exportCsvButton, exportHtmlButton, cancelButton);
         
-        dialogVBox.getChildren().addAll(titleLabel, buttonsBox);
+        dialogVBox.getChildren().addAll(titleLabel, underline, buttonsBox);
         
-        dialog.setScene(new javafx.scene.Scene(dialogVBox));
+        // Add shadow to dialog
+        StackPane dialogContainer = new StackPane();
+        dialogContainer.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+        dialogContainer.getChildren().add(dialogVBox);
+        
+        DropShadow dialogShadow = new DropShadow();
+        dialogShadow.setRadius(10);
+        dialogShadow.setColor(Color.rgb(0, 0, 0, 0.25));
+        dialogShadow.setOffsetY(5);
+        dialogContainer.setEffect(dialogShadow);
+        
+        dialog.setScene(new javafx.scene.Scene(dialogContainer));
         
         // Set up event handlers
         exportCsvButton.setOnAction(e -> {
@@ -1388,41 +1813,429 @@ public class AnalyticsView {
     /**
      * Export semester data to CSV
      */
+//    private void exportToCSV() {
+//        try {
+//            // Show file save dialog
+//            String fileName = ExportUtility.generateExportFileName(semester.getName(), "csv");
+//            java.io.File file = ExportUtility.showSaveFileDialog("Export to CSV", fileName, "csv");
+//            
+//            if (file != null) {
+//                ExportUtility.exportSemesterToCSV(semester, file.getAbsolutePath());
+//                showInfoAlert("Export Successful", "Data exported to CSV successfully!");
+//            }
+//        } catch (Exception e) {
+//            showErrorAlert("Export Error", "Failed to export data: " + e.getMessage());
+//        }
+//    }
+//    
+//    /**
+//     * Export semester data to HTML
+//     */
+//    private void exportToHTML() {
+//        try {
+//            // Show file save dialog
+//            String fileName = ExportUtility.generateExportFileName(semester.getName(), "html");
+//            java.io.File file = ExportUtility.showSaveFileDialog("Export to HTML", fileName, "html");
+//            
+//            if (file != null) {
+//                ExportUtility.exportSemesterToHTML(semester, file.getAbsolutePath());
+//                showInfoAlert("Export Successful", "Data exported to HTML successfully!");
+//            }
+//        } catch (Exception e) {
+//            showErrorAlert("Export Error", "Failed to export data: " + e.getMessage());
+//        }
+//    }
+//    
+    /**
+     * Export semester data to CSV with improved extension handling and detailed content
+     */
     private void exportToCSV() {
         try {
-            // Show file save dialog
-            String fileName = ExportUtility.generateExportFileName(semester.getName(), "csv");
-            java.io.File file = ExportUtility.showSaveFileDialog("Export to CSV", fileName, "csv");
+            // Create a base filename WITHOUT any extension
+            String baseFileName = semester.getName().replaceAll("\\s+", "_");
+            
+            // Show file save dialog with CSV type
+            java.io.File file = ExportUtility.showSaveFileDialog("Export to CSV", baseFileName, "csv");
             
             if (file != null) {
-                ExportUtility.exportSemesterToCSV(semester, file.getAbsolutePath());
-                showInfoAlert("Export Successful", "Data exported to CSV successfully!");
+                // Get the file path
+                String filePath = file.getAbsolutePath();
+                System.out.println("Original path: " + filePath);
+                
+                // Remove any existing .csv extension
+                if (filePath.toLowerCase().endsWith(".csv")) {
+                    filePath = filePath.substring(0, filePath.length() - 4);
+                }
+                
+                // Always add .csv extension once
+                filePath = filePath + ".csv";
+                System.out.println("Final export path: " + filePath);
+                
+                final String finalPath = filePath;
+                
+                // Use direct export to file (bypassing ExportUtility's dialogs)
+                try {
+                    // Create a CSV writer
+                    java.io.FileWriter writer = new java.io.FileWriter(finalPath);
+                    java.io.BufferedWriter bufferedWriter = new java.io.BufferedWriter(writer);
+                    
+                    // Write semester info
+                    bufferedWriter.write("Semester: " + semester.getName() + "\n");
+                    double semesterGpa = semester.calculateGPA();
+                    bufferedWriter.write("GPA: " + String.format("%.2f", semesterGpa) + "\n\n");
+                    
+                    // Write detailed information for each subject
+                    for (Subject subject : semester.getSubjects()) {
+                        bufferedWriter.write("Subject: " + subject.getName() + "\n");
+                        
+                        // Subject overall stats
+                        double percentage = subject.calculateOverallPercentage();
+                        String letterGrade = subject.calculateLetterGrade();
+                        double gpa = subject.calculateGPA();
+                        
+                        bufferedWriter.write("Overall Percentage: " + String.format("%.2f%%", percentage) + "\n");
+                        bufferedWriter.write("Letter Grade: " + letterGrade + "\n");
+                        bufferedWriter.write("GPA: " + String.format("%.2f", gpa) + "\n\n");
+                        
+                        // Assessment Types table
+                        bufferedWriter.write("Assessment Type,Count,Weight,Average Score,Weighted Score\n");
+                        
+                        for (Map.Entry<String, AssessmentType> entry : subject.getAssessmentTypes().entrySet()) {
+                            AssessmentType assessmentType = entry.getValue();
+                            
+                            if (assessmentType.getWeight() > 0) {
+                                // Calculate average score for this type
+                                double totalScore = 0;
+                                int scoredCount = 0;
+                                
+                                for (Assessment assessment : assessmentType.getAssessments()) {
+                                    if (assessment.getScore() > 0) {
+                                        totalScore += assessment.getScore();
+                                        scoredCount++;
+                                    }
+                                }
+                                
+                                double averageScore = scoredCount > 0 ? totalScore / scoredCount : 0.0;
+                                double weightedScore = averageScore * (assessmentType.getWeight() / 100.0);
+                                
+                                bufferedWriter.write(
+                                    assessmentType.getDisplayName() + "," +
+                                    assessmentType.getCount() + "," +
+                                    String.format("%.2f%%", assessmentType.getWeight()) + "," +
+                                    String.format("%.2f%%", averageScore) + "," +
+                                    String.format("%.2f%%", weightedScore) + "\n"
+                                );
+                            }
+                        }
+                        
+                        bufferedWriter.write("\n");
+                        
+                        // Individual Assessments
+                        bufferedWriter.write("Assessment,Score,Finalized\n");
+                        
+                        for (Map.Entry<String, AssessmentType> entry : subject.getAssessmentTypes().entrySet()) {
+                            AssessmentType assessmentType = entry.getValue();
+                            
+                            if (assessmentType.getWeight() > 0) {
+                                for (Assessment assessment : assessmentType.getAssessments()) {
+                                    String assessmentName = assessment.getDisplayName(assessmentType.getType());
+                                    double score = assessment.getScore();
+                                    boolean isFinal = assessment.isFinal();
+                                    
+                                    bufferedWriter.write(
+                                        assessmentName + "," +
+                                        String.format("%.2f%%", score) + "," +
+                                        (isFinal ? "Yes" : "No") + "\n"
+                                    );
+                                }
+                            }
+                        }
+                        
+                        bufferedWriter.write("\n\n");
+                    }
+                    
+                    bufferedWriter.close();
+                    writer.close();
+                    
+                    // Show custom success dialog
+                    Platform.runLater(() -> {
+                        showCustomSuccessDialog("Data exported to CSV successfully!");
+                    });
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        showCustomErrorDialog("Failed to export data: " + ex.getMessage());
+                    });
+                }
             }
         } catch (Exception e) {
-            showErrorAlert("Export Error", "Failed to export data: " + e.getMessage());
+            showCustomErrorDialog("Failed to export data: " + e.getMessage());
         }
     }
-    
+
     /**
-     * Export semester data to HTML
+     * Export semester data to HTML with improved extension handling and detailed content
      */
     private void exportToHTML() {
         try {
-            // Show file save dialog
-            String fileName = ExportUtility.generateExportFileName(semester.getName(), "html");
-            java.io.File file = ExportUtility.showSaveFileDialog("Export to HTML", fileName, "html");
+            // Create a base filename WITHOUT any extension
+            String baseFileName = semester.getName().replaceAll("\\s+", "_");
+            
+            // Show file save dialog with HTML type
+            java.io.File file = ExportUtility.showSaveFileDialog("Export to HTML", baseFileName, "html");
             
             if (file != null) {
-                ExportUtility.exportSemesterToHTML(semester, file.getAbsolutePath());
-                showInfoAlert("Export Successful", "Data exported to HTML successfully!");
+                // Get the file path
+                String filePath = file.getAbsolutePath();
+                System.out.println("Original path: " + filePath);
+                
+                // Remove any existing .html extension
+                if (filePath.toLowerCase().endsWith(".html")) {
+                    filePath = filePath.substring(0, filePath.length() - 5);
+                }
+                
+                // Always add .html extension once
+                filePath = filePath + ".html";
+                System.out.println("Final export path: " + filePath);
+                
+                final String finalPath = filePath;
+                
+                // Use direct export to file (bypassing ExportUtility's dialogs)
+                try {
+                    // Create HTML writer
+                    java.io.FileWriter writer = new java.io.FileWriter(finalPath);
+                    java.io.BufferedWriter bufferedWriter = new java.io.BufferedWriter(writer);
+                    
+                    // HTML header
+                    bufferedWriter.write("<!DOCTYPE html>\n");
+                    bufferedWriter.write("<html lang=\"en\">\n");
+                    bufferedWriter.write("<head>\n");
+                    bufferedWriter.write("    <meta charset=\"UTF-8\">\n");
+                    bufferedWriter.write("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+                    bufferedWriter.write("    <title>" + semester.getName() + " - Grade Report</title>\n");
+                    bufferedWriter.write("    <style>\n");
+                    bufferedWriter.write("        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }\n");
+                    bufferedWriter.write("        h1, h2, h3 { color: #003B6F; }\n"); // Northeastern Blue
+                    bufferedWriter.write("        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }\n");
+                    bufferedWriter.write("        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }\n");
+                    bufferedWriter.write("        th { background-color: #f2f2f2; }\n");
+                    bufferedWriter.write("        tr:nth-child(even) { background-color: #f9f9f9; }\n");
+                    bufferedWriter.write("        .section { margin-bottom: 30px; }\n");
+                    bufferedWriter.write("        .summary { font-weight: bold; margin: 20px 0; }\n");
+                    bufferedWriter.write("        .subject-header { background-color: #e0e0f0; padding: 10px; margin-top: 30px; }\n");
+                    bufferedWriter.write("        .finalized { color: green; }\n");
+                    bufferedWriter.write("        .not-finalized { color: orange; }\n");
+                    bufferedWriter.write("    </style>\n");
+                    bufferedWriter.write("</head>\n");
+                    bufferedWriter.write("<body>\n");
+                    
+                    // Semester title and info
+                    bufferedWriter.write("    <h1>" + semester.getName() + " - Grade Report</h1>\n");
+                    bufferedWriter.write("    <p>Generated on: " + java.time.LocalDate.now() + "</p>\n");
+                    
+                    double semesterGpa = semester.calculateGPA();
+                    bufferedWriter.write("    <div class=\"summary\">\n");
+                    bufferedWriter.write("        <p>Semester GPA: " + String.format("%.2f", semesterGpa) + "</p>\n");
+                    bufferedWriter.write("    </div>\n");
+                    
+                    // For each subject
+                    for (Subject subject : semester.getSubjects()) {
+                        bufferedWriter.write("    <div class=\"section\">\n");
+                        bufferedWriter.write("        <div class=\"subject-header\">\n");
+                        bufferedWriter.write("            <h2>Subject: " + subject.getName() + "</h2>\n");
+                        
+                        // Subject overall stats
+                        double percentage = subject.calculateOverallPercentage();
+                        String letterGrade = subject.calculateLetterGrade();
+                        double gpa = subject.calculateGPA();
+                        
+                        bufferedWriter.write("            <p><strong>Overall Percentage:</strong> " + 
+                                            String.format("%.2f%%", percentage) + "</p>\n");
+                        bufferedWriter.write("            <p><strong>Letter Grade:</strong> " + letterGrade + "</p>\n");
+                        bufferedWriter.write("            <p><strong>GPA:</strong> " + String.format("%.2f", gpa) + "</p>\n");
+                        bufferedWriter.write("        </div>\n");
+                        
+                        // Assessment Types table
+                        bufferedWriter.write("        <div class=\"section\">\n");
+                        bufferedWriter.write("            <h3>Assessment Types</h3>\n");
+                        bufferedWriter.write("            <table>\n");
+                        bufferedWriter.write("                <tr>\n");
+                        bufferedWriter.write("                    <th>Assessment Type</th>\n");
+                        bufferedWriter.write("                    <th>Count</th>\n");
+                        bufferedWriter.write("                    <th>Weight</th>\n");
+                        bufferedWriter.write("                    <th>Average Score</th>\n");
+                        bufferedWriter.write("                    <th>Weighted Score</th>\n");
+                        bufferedWriter.write("                </tr>\n");
+                        
+                        for (Map.Entry<String, AssessmentType> entry : subject.getAssessmentTypes().entrySet()) {
+                            AssessmentType assessmentType = entry.getValue();
+                            
+                            if (assessmentType.getWeight() > 0) {
+                                // Calculate average score for this type
+                                double totalScore = 0;
+                                int scoredCount = 0;
+                                
+                                for (Assessment assessment : assessmentType.getAssessments()) {
+                                    if (assessment.getScore() > 0) {
+                                        totalScore += assessment.getScore();
+                                        scoredCount++;
+                                    }
+                                }
+                                
+                                double averageScore = scoredCount > 0 ? totalScore / scoredCount : 0.0;
+                                double weightedScore = averageScore * (assessmentType.getWeight() / 100.0);
+                                
+                                bufferedWriter.write("                <tr>\n");
+                                bufferedWriter.write("                    <td>" + assessmentType.getDisplayName() + "</td>\n");
+                                bufferedWriter.write("                    <td>" + assessmentType.getCount() + "</td>\n");
+                                bufferedWriter.write("                    <td>" + String.format("%.2f%%", assessmentType.getWeight()) + "</td>\n");
+                                bufferedWriter.write("                    <td>" + String.format("%.2f%%", averageScore) + "</td>\n");
+                                bufferedWriter.write("                    <td>" + String.format("%.2f%%", weightedScore) + "</td>\n");
+                                bufferedWriter.write("                </tr>\n");
+                            }
+                        }
+                        
+                        bufferedWriter.write("            </table>\n");
+                        bufferedWriter.write("        </div>\n");
+                        
+                        // Individual Assessments table
+                        bufferedWriter.write("        <div class=\"section\">\n");
+                        bufferedWriter.write("            <h3>Individual Assessments</h3>\n");
+                        bufferedWriter.write("            <table>\n");
+                        bufferedWriter.write("                <tr>\n");
+                        bufferedWriter.write("                    <th>Assessment</th>\n");
+                        bufferedWriter.write("                    <th>Score</th>\n");
+                        bufferedWriter.write("                    <th>Status</th>\n");
+                        bufferedWriter.write("                </tr>\n");
+                        
+                        for (Map.Entry<String, AssessmentType> entry : subject.getAssessmentTypes().entrySet()) {
+                            AssessmentType assessmentType = entry.getValue();
+                            
+                            if (assessmentType.getWeight() > 0) {
+                                for (Assessment assessment : assessmentType.getAssessments()) {
+                                    String assessmentName = assessment.getDisplayName(assessmentType.getType());
+                                    double score = assessment.getScore();
+                                    boolean isFinal = assessment.isFinal();
+                                    
+                                    bufferedWriter.write("                <tr>\n");
+                                    bufferedWriter.write("                    <td>" + assessmentName + "</td>\n");
+                                    bufferedWriter.write("                    <td>" + String.format("%.2f%%", score) + "</td>\n");
+                                    
+                                    if (isFinal) {
+                                        bufferedWriter.write("                    <td class=\"finalized\">Finalized</td>\n");
+                                    } else {
+                                        bufferedWriter.write("                    <td class=\"not-finalized\">Not Finalized</td>\n");
+                                    }
+                                    
+                                    bufferedWriter.write("                </tr>\n");
+                                }
+                            }
+                        }
+                        
+                        bufferedWriter.write("            </table>\n");
+                        bufferedWriter.write("        </div>\n");
+                        bufferedWriter.write("    </div>\n");
+                    }
+                    
+                    // HTML footer
+                    bufferedWriter.write("</body>\n");
+                    bufferedWriter.write("</html>");
+                    
+                    bufferedWriter.close();
+                    writer.close();
+                    
+                    // Show custom success dialog
+                    Platform.runLater(() -> {
+                        showCustomSuccessDialog("Data exported to HTML successfully!");
+                    });
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        showCustomErrorDialog("Failed to export data: " + ex.getMessage());
+                    });
+                }
             }
         } catch (Exception e) {
-            showErrorAlert("Export Error", "Failed to export data: " + e.getMessage());
+            showCustomErrorDialog("Failed to export data: " + e.getMessage());
         }
     }
-    
+
     /**
-     * Show an error alert
+     * Show a clean success dialog with text and OK button
+     */
+    private void showCustomSuccessDialog(String message) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Export Successful");
+        dialog.setWidth(400);
+        dialog.setHeight(200);
+        
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(30));
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white;");
+        
+        Label messageLabel = new Label(message);
+        messageLabel.setFont(Font.font("Arial", 16));
+        messageLabel.setTextFill(Color.rgb(0, 59, 111)); // Northeastern Blue
+        messageLabel.setWrapText(true);
+        
+        Button okButton = new Button("OK");
+        okButton.setPrefWidth(80);
+        okButton.setPrefHeight(35);
+        okButton.setFont(Font.font("Arial", 14));
+        okButton.setStyle(
+            "-fx-background-color: #00AD56; " + // Green color
+            "-fx-text-fill: white; " +
+            "-fx-background-radius: 5;"
+        );
+        okButton.setOnAction(e -> dialog.close());
+        
+        content.getChildren().addAll(messageLabel, okButton);
+        
+        Scene scene = new Scene(content);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    /**
+     * Show a clean error dialog with text and OK button
+     */
+    private void showCustomErrorDialog(String message) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Export Error");
+        dialog.setWidth(400);
+        dialog.setHeight(200);
+        
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(30));
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white;");
+        
+        Label messageLabel = new Label(message);
+        messageLabel.setFont(Font.font("Arial", 16));
+        messageLabel.setTextFill(Color.rgb(200, 16, 46)); // Northeastern Red
+        messageLabel.setWrapText(true);
+        
+        Button okButton = new Button("OK");
+        okButton.setPrefWidth(80);
+        okButton.setPrefHeight(35);
+        okButton.setFont(Font.font("Arial", 14));
+        okButton.setStyle(
+            "-fx-background-color: #C8102E; " + // Red color
+            "-fx-text-fill: white; " +
+            "-fx-background-radius: 5;"
+        );
+        okButton.setOnAction(e -> dialog.close());
+        
+        content.getChildren().addAll(messageLabel, okButton);
+        
+        Scene scene = new Scene(content);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+   
+    /**
+     * Show a styled error alert
      * 
      * @param title The alert title
      * @param message The alert message
@@ -1432,11 +2245,20 @@ public class AnalyticsView {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        
+        // Style the alert dialog
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #f8f8ff; " +
+            "-fx-border-color: #e0e0e0; " +
+            "-fx-border-width: 1px; " +
+            "-fx-font-size: 14px;"
+        );
+        
         alert.showAndWait();
     }
     
     /**
-     * Show an information alert
+     * Show a styled information alert
      * 
      * @param title The alert title
      * @param message The alert message
@@ -1446,10 +2268,53 @@ public class AnalyticsView {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        
+        // Style the alert dialog
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #f8f8ff; " +
+            "-fx-border-color: #e0e0e0; " +
+            "-fx-border-width: 1px; " +
+            "-fx-font-size: 14px;"
+        );
+        
         alert.showAndWait();
     }
     
+    /**
+     * Sets the application to full screen mode.
+     * This method should be called after the stage is shown.
+     * @param stage The primary stage of the application
+     */
+    public void setFullScreen(javafx.stage.Stage stage) {
+        stage.setMaximized(true);
+        
+        // Additional step to ensure full screen after a short delay
+        Platform.runLater(() -> {
+            try {
+                // Additional size adjustment after the stage is shown
+                mainLayout.setPrefSize(stage.getWidth(), stage.getHeight());
+                System.out.println("Adjusted size to stage dimensions: " + 
+                                 stage.getWidth() + "x" + stage.getHeight());
+            } catch (Exception e) {
+                System.err.println("Error in setFullScreen: " + e.getMessage());
+            }
+        });
+    }
+    
+    /**
+     * Get the main layout for this view.
+     * Additional sizing enforced here to ensure full screen display.
+     * @return The main layout
+     */
     public BorderPane getView() {
+        // Ensure the layout uses maximum available space
+        System.out.println("Getting AnalyticsView with dimensions: " + 
+                         mainLayout.getPrefWidth() + "x" + mainLayout.getPrefHeight());
+        
+        // Force preferred width to screen width one more time before returning
+        mainLayout.setPrefWidth(screenWidth);
+        mainLayout.setPrefHeight(screenHeight);
+        
         return mainLayout;
     }
 }

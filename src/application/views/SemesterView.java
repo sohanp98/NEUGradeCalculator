@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javafx.application.Platform;
-
+import javafx.scene.control.ScrollPane;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
@@ -101,6 +101,7 @@ public class SemesterView {
     /**
      * Initialize the view with enhanced styling
      */
+
     private void initialize() {
         try {
             System.out.println("\n===== INITIALIZING SEMESTER VIEW =====");
@@ -123,6 +124,8 @@ public class SemesterView {
             
             // Set preferred size to maximize screen
             mainLayout.setPrefSize(screenWidth, screenHeight);
+            mainLayout.setMinSize(screenWidth, screenHeight);
+            mainLayout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
             
             // Create header with enhanced styling
             Label headerLabel = new Label(semester.getName());
@@ -203,23 +206,56 @@ public class SemesterView {
                 "-fx-tab-min-height: 35px;"
             );
             
-            // Dashboard tab
+            // Dashboard tab with scrolling support
             Tab dashboardTab = new Tab("Dashboard");
             dashboardTab.setClosable(false);
-            VBox dashboardContent = createDashboardContent();
-            dashboardTab.setContent(dashboardContent);
             
-            // Transcript tab
+            // Add ScrollPane for dashboardContent to enable scrolling
+            ScrollPane dashboardScrollPane = new ScrollPane();
+            dashboardScrollPane.setFitToWidth(true);
+            dashboardScrollPane.setPrefWidth(screenWidth - 60);
+            dashboardScrollPane.setStyle("-fx-background-color: transparent;");
+            
+            // Create dashboard content
+            VBox dashboardContent = createDashboardContent();
+            
+            // Set the content to the scroll pane
+            dashboardScrollPane.setContent(dashboardContent);
+            dashboardTab.setContent(dashboardScrollPane);
+            
+            // Transcript tab with scrolling support
             Tab transcriptTab = new Tab("Transcript");
             transcriptTab.setClosable(false);
-            VBox transcriptContent = createTranscriptContent();
-            transcriptTab.setContent(transcriptContent);
             
-            // Performance tab
+            // Add ScrollPane for transcriptContent to enable scrolling
+            ScrollPane transcriptScrollPane = new ScrollPane();
+            transcriptScrollPane.setFitToWidth(true);
+            transcriptScrollPane.setPrefWidth(screenWidth - 60);
+            transcriptScrollPane.setStyle("-fx-background-color: transparent;");
+            
+            // Create transcript content
+            VBox transcriptContent = createTranscriptContent();
+            
+            // Set the content to the scroll pane
+            transcriptScrollPane.setContent(transcriptContent);
+            transcriptTab.setContent(transcriptScrollPane);
+            
+            // Performance tab with scrolling support
             Tab performanceTab = new Tab("Performance");
             performanceTab.setClosable(false);
+            
+            // Add ScrollPane for performanceContent to enable scrolling
+            ScrollPane performanceScrollPane = new ScrollPane();
+            performanceScrollPane.setFitToWidth(true);
+            performanceScrollPane.setPrefWidth(screenWidth - 60);
+            performanceScrollPane.setStyle("-fx-background-color: transparent;");
+            
+            // Create performance content
             VBox performanceContent = createPerformanceContent();
-            performanceTab.setContent(performanceContent);
+            
+            // Set the content to the scroll pane
+            performanceScrollPane.setContent(performanceContent);
+            performanceTab.setContent(performanceScrollPane);
             
             tabPane.getTabs().addAll(dashboardTab, transcriptTab, performanceTab);
             
@@ -255,9 +291,26 @@ public class SemesterView {
                         semester = controller.getSemester();
                         
                         // Completely rebuild tabs with fresh data
-                        dashboardTab.setContent(createDashboardContent());
-                        transcriptTab.setContent(createTranscriptContent());
-                        performanceTab.setContent(createPerformanceContent());
+                        Tab currentTab = tabPane.getSelectionModel().getSelectedItem();
+                        int selectedIndex = tabPane.getSelectionModel().getSelectedIndex();
+                        
+                        // Update dashboard tab with scrolling
+                        VBox newDashboardContent = createDashboardContent();
+                        ScrollPane newDashboardScrollPane = (ScrollPane) tabPane.getTabs().get(0).getContent();
+                        newDashboardScrollPane.setContent(newDashboardContent);
+                        
+                        // Update transcript tab with scrolling
+                        VBox newTranscriptContent = createTranscriptContent();
+                        ScrollPane newTranscriptScrollPane = (ScrollPane) tabPane.getTabs().get(1).getContent();
+                        newTranscriptScrollPane.setContent(newTranscriptContent);
+                        
+                        // Update performance tab with scrolling
+                        VBox newPerformanceContent = createPerformanceContent();
+                        ScrollPane newPerformanceScrollPane = (ScrollPane) tabPane.getTabs().get(2).getContent();
+                        newPerformanceScrollPane.setContent(newPerformanceContent);
+                        
+                        // Re-select the previously selected tab
+                        tabPane.getSelectionModel().select(selectedIndex);
                         
                         // Update GPA in header
                         gpaLabel.setText(String.format("GPA: %.2f", semester.calculateGPA()));
@@ -287,7 +340,6 @@ public class SemesterView {
             showErrorAlert("Error", "Failed to initialize view: " + e.getMessage());
         }
     }
-    
     /**
      * Create content for the dashboard tab with fresh data
      * Enhanced styling only, functionality unchanged
@@ -357,11 +409,10 @@ public class SemesterView {
         System.out.println("===== DASHBOARD TAB CREATION COMPLETE =====\n");
         return content;
     }
-    
+      
     /**
      * Update the dashboard tab with fresh data
      * Called after adding a new subject
-     * Unchanged functionality, enhanced styling
      */
     private void updateDashboardTab() {
         try {
@@ -399,10 +450,17 @@ public class SemesterView {
             
             System.out.println("Updated header GPA label to: " + semesterGPA);
             
-            // Refresh the dashboard tab content
+            // Refresh the dashboard tab content with scrolling
             Tab dashboardTab = tabPane.getTabs().get(0);
+            
+            // Get the current scroll pane
+            ScrollPane scrollPane = (ScrollPane) dashboardTab.getContent();
+            
+            // Create new dashboard content
             VBox newContent = createDashboardContent();
-            dashboardTab.setContent(newContent);
+            
+            // Update the scroll pane content
+            scrollPane.setContent(newContent);
             
             System.out.println("===== DASHBOARD TAB UPDATE COMPLETE =====\n");
         } catch (Exception e) {
