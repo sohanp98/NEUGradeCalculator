@@ -763,21 +763,50 @@ public class SemesterView {
         
         // Show the dialog and handle the result - unchanged
         alert.showAndWait().ifPresent(buttonType -> {
-            if (buttonType == deleteButton) {
-                try {
-                    // Delete the subject
-                    controller.deleteSubject(subject.getId());
-                    
-                    // Refresh the view - unchanged
-                    initialize();
-                    
-                    // Show success message
-                    showInfoAlert("Subject Deleted", "The subject was successfully deleted.");
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    showErrorAlert("Error", "Failed to delete subject: " + ex.getMessage());
-                }
-            }
+//            if (buttonType == deleteButton) {
+//                try {
+//                    // Delete the subject
+//                    controller.deleteSubject(subject.getId());
+//                    
+//                    // Refresh the view - unchanged
+//                    initialize();
+//                    
+//                    // Show success message
+//                    showInfoAlert("Subject Deleted", "The subject was successfully deleted.");
+//                } catch (Exception ex) {
+//                    ex.printStackTrace();
+//                    showErrorAlert("Error", "Failed to delete subject: " + ex.getMessage());
+//                }
+//            }
+        	if (buttonType == deleteButton) {
+        	    try {
+        	        // Delete the subject
+        	        controller.deleteSubject(subject.getId());
+        	        
+        	        // Use Platform.runLater() to update the UI components as in add subject
+        	        Platform.runLater(() -> {
+        	            // Update the dashboard tab
+        	            updateDashboardTab();
+        	            
+        	            // Update the transcript tab content
+        	            Tab transcriptTab = tabPane.getTabs().get(1);
+        	            transcriptTab.setContent(createTranscriptContent());
+        	            
+        	            // Update the performance tab if there are at least 2 subjects
+        	            if (semester.getSubjects().size() >= 2) {
+        	                Tab performanceTab = tabPane.getTabs().get(2);
+        	                performanceTab.setContent(createPerformanceContent());
+        	            }
+        	        });
+        	        
+        	        // Show success message
+        	        showInfoAlert("Subject Deleted", "The subject was successfully deleted.");
+        	    } catch (Exception ex) {
+        	        ex.printStackTrace();
+        	        showErrorAlert("Error", "Failed to delete subject: " + ex.getMessage());
+        	    }
+        	}
+
         });
     }
     
@@ -1281,7 +1310,7 @@ public class SemesterView {
         nameLabel.setTextFill(PRIMARY_COLOR);
         
         TextField nameField = new TextField();
-        nameField.setPromptText("e.g., CS5010 - Programming Design Paradigm");
+        nameField.setPromptText("e.g., CSYE6200 - Concepts of Object-Oriented Design");
         nameField.setPrefHeight(40);
         styleTextField(nameField);
         
@@ -1791,13 +1820,35 @@ public class SemesterView {
                     }
                 }
                 
+//                if (anyChange) {
+//                    // Refresh semester data
+//                    controller.refreshSemester();
+//                    
+//                    // Refresh view
+//                    initialize();
+//                }
                 if (anyChange) {
-                    // Refresh semester data
+                    // Refresh semester data and update the local semester reference
                     controller.refreshSemester();
+                    semester = controller.getSemester();
                     
-                    // Refresh view
-                    initialize();
+                    // Update the UI components on the JavaFX Application Thread
+                    Platform.runLater(() -> {
+                        // Update the dashboard tab
+                        updateDashboardTab();
+                        
+                        // Refresh the transcript tab content
+                        Tab transcriptTab = tabPane.getTabs().get(1);
+                        transcriptTab.setContent(createTranscriptContent());
+                        
+                        // Update the performance tab if there are at least 2 subjects
+                        if (semester.getSubjects().size() >= 2) {
+                            Tab performanceTab = tabPane.getTabs().get(2);
+                            performanceTab.setContent(createPerformanceContent());
+                        }
+                    });
                 }
+
                 
                 dialog.close();
             } catch (NumberFormatException ex) {
@@ -2122,17 +2173,37 @@ public class SemesterView {
             // Set up event handlers - unchanged
             cancelButton.setOnAction(e -> dialog.close());
             
+//            saveButton.setOnAction(e -> {
+//                if (gradeHandler.saveGrades()) {
+//                    // Successfully saved, refresh view
+//                    try {
+//                        initialize();
+//                    } catch (Exception ex) {
+//                        ex.printStackTrace();
+//                        showErrorAlert("Error", "Failed to refresh view: " + ex.getMessage());
+//                    }
+//                }
+//            });
             saveButton.setOnAction(e -> {
                 if (gradeHandler.saveGrades()) {
-                    // Successfully saved, refresh view
-                    try {
-                        initialize();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        showErrorAlert("Error", "Failed to refresh view: " + ex.getMessage());
-                    }
+                    // Successfully saved, now update specific UI components on the JavaFX Application Thread
+                    Platform.runLater(() -> {
+                        // Update the dashboard tab
+                        updateDashboardTab();
+                        
+                        // Update the transcript tab content
+                        Tab transcriptTab = tabPane.getTabs().get(1);
+                        transcriptTab.setContent(createTranscriptContent());
+                        
+                        // Update the performance tab (if there are at least 2 subjects)
+                        if (semester.getSubjects().size() >= 2) {
+                            Tab performanceTab = tabPane.getTabs().get(2);
+                            performanceTab.setContent(createPerformanceContent());
+                        }
+                    });
                 }
             });
+
             
             dialog.showAndWait();
         } catch (Exception e) {
