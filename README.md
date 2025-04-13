@@ -34,7 +34,7 @@ A comprehensive JavaFX application for Northeastern University College of Engine
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/sohanp98/.git
+git clone https://github.com/sohanp98/NEUGradeCalculator.git
 cd NEUGradeCalculator
 ```
 
